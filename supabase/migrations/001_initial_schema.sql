@@ -96,3 +96,12 @@ CREATE INDEX IF NOT EXISTS "Workout_date_idx" ON "Workout"("date");
 CREATE INDEX IF NOT EXISTS "Set_workoutId_idx" ON "Set"("workoutId");
 CREATE INDEX IF NOT EXISTS "Set_exerciseId_idx" ON "Set"("exerciseId");
 
+
+-- Disable Row Level Security for all tables (enable it later with proper policies if needed)
+ALTER TABLE "User" DISABLE ROW LEVEL SECURITY;
+ALTER TABLE "Exercise" DISABLE ROW LEVEL SECURITY;
+ALTER TABLE "Program" DISABLE ROW LEVEL SECURITY;
+ALTER TABLE "Day" DISABLE ROW LEVEL SECURITY;
+ALTER TABLE "DayExercise" DISABLE ROW LEVEL SECURITY;
+ALTER TABLE "Workout" DISABLE ROW LEVEL SECURITY;
+ALTER TABLE "Set" DISABLE ROW LEVEL SECURITY;
