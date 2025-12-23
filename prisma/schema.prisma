@@ -1,0 +1,108 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  name          String?
+  age           Int?
+  gender        String?
+  height        Float?   // in cm
+  weight        Float?   // in kg
+  experienceLevel String? // Beginner, Intermediate, Advanced
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  programs      Program[]
+  workouts      Workout[]
+}
+
+model Program {
+  id            String   @id @default(cuid())
+  name          String
+  userId        String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  days          Day[]
+}
+
+model Day {
+  id            String   @id @default(cuid())
+  dayNumber     Int
+  isRestDay     Boolean  @default(false)
+  isDeloadWeek  Boolean  @default(false)
+  programId     String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  program       Program @relation(fields: [programId], references: [id], onDelete: Cascade)
+  exercises     DayExercise[]
+}
+
+model Exercise {
+  id            String   @id @default(cuid())
+  name          String
+  mnName        String
+  muscleGroup   String
+  equipment     String?
+  type          String?  // strength, cardio, etc.
+  isDefault     Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  dayExercises  DayExercise[]
+  sets          Set[]
+}
+
+model DayExercise {
+  id            String   @id @default(cuid())
+  dayId         String
+  exerciseId    String
+  order         Int
+  createdAt     DateTime @default(now())
+  
+  day           Day      @relation(fields: [dayId], references: [id], onDelete: Cascade)
+  exercise      Exercise @relation(fields: [exerciseId], references: [id])
+}
+
+model Workout {
+  id            String   @id @default(cuid())
+  userId        String
+  date          DateTime
+  notes         String?
+  completed     Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sets          Set[]
+}
+
+model Set {
+  id            String   @id @default(cuid())
+  workoutId     String
+  exerciseId    String
+  reps          Int
+  weight        Float    // in kg
+  rpe           Int?     // 1-10 scale
+  completed     Boolean  @default(false)
+  order         Int
+  createdAt     DateTime @default(now())
+  
+  workout       Workout  @relation(fields: [workoutId], references: [id], onDelete: Cascade)
+  exercise      Exercise @relation(fields: [exerciseId], references: [id])
+}
