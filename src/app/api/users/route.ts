@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { db } from '@/lib/db'
+import { getSupabase } from '@/lib/supabase'
+import { v4 as uuidv4 } from 'uuid'
 
 export async function GET(request: NextRequest) {
   try {
@@ -13,11 +14,19 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    const user = await db.user.findUnique({
-      where: {
-        email
-      }
-    })
+    const { data: user, error } = await getSupabase()
+      .from('User')
+      .select('*')
+      .eq('email', email)
+      .maybeSingle()
+
+    if (error) {
+      console.error('Supabase error:', error)
+      return NextResponse.json(
+        { error: 'Failed to fetch user', details: error.message },
+        { status: 500 }
+      )
+    }
 
     if (!user) {
       return NextResponse.json(
@@ -49,9 +58,20 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if user already exists
-    const existingUser = await db.user.findUnique({
-      where: { email }
-    })
+    const { data: existingUser, error: checkError } = await getSupabase()
+      .from('User')
+      .select('id')
+      .eq('email', email)
+      .maybeSingle()
+
+    if (checkError && checkError.code !== 'PGRST116') {
+      // PGRST116 is "no rows returned" which is fine, other errors are real problems
+      console.error('Supabase check error:', checkError)
+      return NextResponse.json(
+        { error: 'Failed to check user existence', details: checkError.message },
+        { status: 500 }
+      )
+    }
 
     if (existingUser) {
       return NextResponse.json(
@@ -60,17 +80,38 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const user = await db.user.create({
-      data: {
-        email,
-        name: name || null,
-        age: age || null,
-        gender: gender || null,
-        height: height || null,
-        weight: weight || null,
-        experienceLevel: experienceLevel || null
-      }
-    })
+    const newUser = {
+      id: uuidv4(),
+      email,
+      name: name || null,
+      age: age || null,
+      gender: gender || null,
+      height: height || null,
+      weight: weight || null,
+      experienceLevel: experienceLevel || null,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    }
+
+    const { data: user, error } = await getSupabase()
+      .from('User')
+      .insert(newUser)
+      .select()
+      .single()
+
+    if (error) {
+      console.error('Supabase error:', error)
+      // Provide more detailed error information
+      return NextResponse.json(
+        { 
+          error: 'Failed to create user',
+          details: error.message,
+          code: error.code,
+          hint: error.hint
+        },
+        { status: 500 }
+      )
+    }
 
     return NextResponse.json(user, { status: 201 })
   } catch (error) {
@@ -94,17 +135,30 @@ export async function PUT(request: NextRequest) {
       )
     }
 
-    const user = await db.user.update({
-      where: { email },
-      data: {
-        name: name !== undefined ? name : undefined,
-        age: age !== undefined ? age : undefined,
-        gender: gender !== undefined ? gender : undefined,
-        height: height !== undefined ? height : undefined,
-        weight: weight !== undefined ? weight : undefined,
-        experienceLevel: experienceLevel !== undefined ? experienceLevel : undefined
-      }
-    })
+    const updateData: any = {
+      updatedAt: new Date().toISOString(),
+    }
+
+    if (name !== undefined) updateData.name = name
+    if (age !== undefined) updateData.age = age
+    if (gender !== undefined) updateData.gender = gender
+    if (height !== undefined) updateData.height = height
+    if (weight !== undefined) updateData.weight = weight
+    if (experienceLevel !== undefined) updateData.experienceLevel = experienceLevel
+
+    const { data: user, error } = await getSupabase()
+      .from('User')
+      .update(updateData)
+      .eq('email', email)
+      .select()
+      .single()
+
+    if (error || !user) {
+      return NextResponse.json(
+        { error: 'Failed to update user' },
+        { status: 500 }
+      )
+    }
 
     return NextResponse.json(user)
   } catch (error) {

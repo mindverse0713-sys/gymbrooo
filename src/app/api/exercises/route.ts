@@ -1,15 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { db } from '@/lib/db'
+import { getSupabase } from '@/lib/supabase'
+import { v4 as uuidv4 } from 'uuid'
 
 export async function GET() {
   try {
-    const exercises = await db.exercise.findMany({
-      orderBy: {
-        mnName: 'asc'
-      }
-    })
+    const { data: exercises, error } = await getSupabase()
+      .from('Exercise')
+      .select('*')
+      .order('mnName', { ascending: true })
 
-    return NextResponse.json(exercises)
+    if (error) {
+      console.error('Supabase error:', error)
+      return NextResponse.json(
+        { error: 'Failed to fetch exercises' },
+        { status: 500 }
+      )
+    }
+
+    return NextResponse.json(exercises || [])
   } catch (error) {
     console.error('Error fetching exercises:', error)
     return NextResponse.json(
@@ -31,16 +39,31 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const exercise = await db.exercise.create({
-      data: {
-        name,
-        mnName,
-        muscleGroup,
-        equipment,
-        type,
-        isDefault: false
-      }
-    })
+    const newExercise = {
+      id: uuidv4(),
+      name,
+      mnName,
+      muscleGroup,
+      equipment: equipment || null,
+      type: type || null,
+      isDefault: false,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    }
+
+    const { data: exercise, error } = await getSupabase()
+      .from('Exercise')
+      .insert(newExercise)
+      .select()
+      .single()
+
+    if (error) {
+      console.error('Supabase error:', error)
+      return NextResponse.json(
+        { error: 'Failed to create exercise' },
+        { status: 500 }
+      )
+    }
 
     return NextResponse.json(exercise, { status: 201 })
   } catch (error) {
