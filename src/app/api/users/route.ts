@@ -64,11 +64,16 @@ export async function POST(request: NextRequest) {
       .eq('email', email)
       .maybeSingle()
 
-    if (checkError && checkError.code !== 'PGRST116') {
-      // PGRST116 is "no rows returned" which is fine, other errors are real problems
+    // maybeSingle returns null if no row found, error only if there's a real problem
+    if (checkError) {
       console.error('Supabase check error:', checkError)
+      // If it's a table not found error, that's the real problem
       return NextResponse.json(
-        { error: 'Failed to check user existence', details: checkError.message },
+        { 
+          error: 'Database error. Please check if tables exist in Supabase.',
+          details: checkError.message,
+          code: checkError.code
+        },
         { status: 500 }
       )
     }
@@ -100,14 +105,28 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (error) {
-      console.error('Supabase error:', error)
-      // Provide more detailed error information
+      console.error('Supabase insert error:', error)
+      // Provide more detailed error information for debugging
+      const errorMessage = error.message || 'Unknown error'
+      const errorCode = error.code || 'UNKNOWN'
+      
+      // Check if it's a table not found error
+      if (errorMessage.includes('does not exist') || errorCode === '42P01') {
+        return NextResponse.json(
+          { 
+            error: 'Database table not found. Please run the SQL migration in Supabase.',
+            details: errorMessage,
+            code: errorCode
+          },
+          { status: 500 }
+        )
+      }
+      
       return NextResponse.json(
         { 
           error: 'Failed to create user',
-          details: error.message,
-          code: error.code,
-          hint: error.hint
+          details: errorMessage,
+          code: errorCode
         },
         { status: 500 }
       )
