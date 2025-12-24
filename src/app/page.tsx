@@ -630,9 +630,10 @@ export default function GymApp() {
       const exporter = new PDFExporter()
       const workoutData = PDFExporter.createWorkoutExportData(currentWorkout, workoutTime)
       await exporter.exportWorkout(workoutData)
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error exporting workout:', error)
-      alert('PDF татахад алдаа гарлаа')
+      const errorMessage = error?.message || 'PDF татахад алдаа гарлаа'
+      alert(errorMessage)
     }
   }
 

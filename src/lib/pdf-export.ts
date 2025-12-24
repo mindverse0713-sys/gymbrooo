@@ -64,16 +64,21 @@ export class PDFExporter {
 
     // Create HTML element for better text rendering
     const container = document.createElement('div')
-    container.style.width = '210mm'
+    container.style.width = '794px' // Use pixels instead of mm for better compatibility
+    container.style.minHeight = '1123px' // A4 height in pixels
     container.style.padding = '0'
     container.style.backgroundColor = '#ffffff'
     container.style.fontFamily = 'Arial, sans-serif'
-    container.style.position = 'absolute'
-    container.style.left = '-9999px'
+    container.style.position = 'fixed'
+    container.style.top = '0'
+    container.style.left = '0'
+    container.style.opacity = '0'
+    container.style.pointerEvents = 'none'
+    container.style.zIndex = '-1'
     document.body.appendChild(container)
 
     let htmlContent = `
-      <div style="width: 210mm; background: white; padding: 0; font-family: Arial, sans-serif;">
+      <div style="width: 794px; background: white; padding: 0; font-family: Arial, sans-serif;">
         <!-- Header -->
         <div style="background: #3b82f6; color: white; padding: 20px 15px; text-align: center;">
           <h1 style="margin: 0; font-size: 24px; font-weight: bold;">💪 Gym Дэвтэр</h1>
@@ -163,13 +168,23 @@ export class PDFExporter {
     container.innerHTML = htmlContent
 
     try {
+      // Wait a bit for the DOM to render
+      await new Promise(resolve => setTimeout(resolve, 200))
+      
+      // Get the actual content element (first child div)
+      const contentElement = container.firstElementChild as HTMLElement
+      if (!contentElement) {
+        throw new Error('Failed to create PDF content element')
+      }
+      
       // Convert HTML to canvas
-      const canvas = await html2canvas(container, {
+      const canvas = await html2canvas(contentElement, {
         scale: 2,
         useCORS: true,
         logging: false,
-        width: 794, // A4 width in pixels at 96 DPI
-        windowWidth: 794
+        backgroundColor: '#ffffff',
+        removeContainer: false,
+        allowTaint: false
       })
 
       // Create PDF from canvas
@@ -207,9 +222,13 @@ export class PDFExporter {
       const fileName = `gym-workout-${new Date(workout.date).toISOString().split('T')[0]}.pdf`
       this.doc.save(fileName)
     } catch (error) {
-      document.body.removeChild(container)
+      // Clean up container even if there's an error
+      if (container && container.parentNode) {
+        document.body.removeChild(container)
+      }
       console.error('Error generating PDF:', error)
-      throw error
+      // Re-throw with more context
+      throw new Error(`PDF generation failed: ${error instanceof Error ? error.message : String(error)}`)
     }
   }
 
