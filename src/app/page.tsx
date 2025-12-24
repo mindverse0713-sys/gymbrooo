@@ -522,8 +522,8 @@ export default function GymApp() {
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    if (!loginEmail.trim() || !loginPassword.trim() || !signUpName.trim()) {
-      alert('Бүх талбарыг бөглөнө үү')
+    if (!loginEmail.trim() || !signUpName.trim()) {
+      alert('Нэр болон имэйл оруулна уу')
       return
     }
 
