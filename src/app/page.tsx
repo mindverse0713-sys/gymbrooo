@@ -741,7 +741,7 @@ export default function GymApp() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground p-2 sm:p-4 max-w-md mx-auto">
+    <div className="min-h-screen bg-background text-foreground p-3 sm:p-4 max-w-md mx-auto pb-20 sm:pb-4">
       {showLogin && (
         <Card className="mb-4 sm:mb-6">
           <CardHeader>
@@ -763,7 +763,7 @@ export default function GymApp() {
                     onChange={(e) => setLoginEmail(e.target.value)}
                     placeholder="your@email.com"
                     required
-                    className="h-10"
+                    className="h-12 sm:h-10 text-base sm:text-sm"
                   />
                 </div>
                 <div>
@@ -775,10 +775,10 @@ export default function GymApp() {
                     onChange={(e) => setLoginPassword(e.target.value)}
                     placeholder="Нууц үг"
                     required
-                    className="h-10"
+                    className="h-12 sm:h-10 text-base sm:text-sm"
                   />
                 </div>
-                <Button type="submit" className="w-full h-10" disabled={isLoggingIn}>
+                <Button type="submit" className="w-full h-12 sm:h-10 text-base sm:text-sm" disabled={isLoggingIn}>
                   {isLoggingIn ? 'Нэвтэрч байна...' : 'Нэвтрэх'}
                 </Button>
                 <div className="text-center">
@@ -803,7 +803,7 @@ export default function GymApp() {
                     onChange={(e) => setSignUpName(e.target.value)}
                     placeholder="Таны нэр"
                     required
-                    className="h-10"
+                    className="h-12 sm:h-10 text-base sm:text-sm"
                   />
                 </div>
                 <div>
@@ -815,7 +815,7 @@ export default function GymApp() {
                     onChange={(e) => setLoginEmail(e.target.value)}
                     placeholder="your@email.com"
                     required
-                    className="h-10"
+                    className="h-12 sm:h-10 text-base sm:text-sm"
                   />
                 </div>
                 <div>
@@ -828,10 +828,10 @@ export default function GymApp() {
                     placeholder="Хамгийн багадаа 6 тэмдэгт"
                     required
                     minLength={6}
-                    className="h-10"
+                    className="h-12 sm:h-10 text-base sm:text-sm"
                   />
                 </div>
-                <Button type="submit" className="w-full h-10" disabled={isLoggingIn}>
+                <Button type="submit" className="w-full h-12 sm:h-10 text-base sm:text-sm" disabled={isLoggingIn}>
                   {isLoggingIn ? 'Бүртгэж байна...' : 'Бүртгүүлэх'}
                 </Button>
                 <div className="text-center">
@@ -868,7 +868,8 @@ export default function GymApp() {
           </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6 mb-6">
+        {/* Desktop Tabs */}
+        <TabsList className="hidden sm:grid sm:grid-cols-6 mb-6">
           <TabsTrigger value="home" className="text-xs">Нүүр</TabsTrigger>
           <TabsTrigger value="exercises" className="text-xs">Дасгал</TabsTrigger>
           <TabsTrigger value="program" className="text-xs">Хөтөлбөр</TabsTrigger>
@@ -876,6 +877,70 @@ export default function GymApp() {
           <TabsTrigger value="stats" className="text-xs">Статистик</TabsTrigger>
           <TabsTrigger value="profile" className="text-xs">Профайл</TabsTrigger>
         </TabsList>
+        
+        {/* Mobile Bottom Navigation */}
+        <div className="fixed bottom-0 left-0 right-0 sm:hidden bg-card border-t border-border z-50">
+          <div className="grid grid-cols-5 w-full max-w-md mx-auto">
+            <button
+              onClick={() => setActiveTab('home')}
+              className={`flex flex-col items-center justify-center py-2 px-1 ${
+                activeTab === 'home' ? 'text-primary' : 'text-muted-foreground'
+              }`}
+            >
+              <Dumbbell className="w-5 h-5 mb-1" />
+              <span className="text-xs">Нүүр</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('exercises')}
+              className={`flex flex-col items-center justify-center py-2 px-1 ${
+                activeTab === 'exercises' ? 'text-primary' : 'text-muted-foreground'
+              }`}
+            >
+              <Play className="w-5 h-5 mb-1" />
+              <span className="text-xs">Дасгал</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('program')}
+              className={`flex flex-col items-center justify-center py-2 px-1 ${
+                activeTab === 'program' ? 'text-primary' : 'text-muted-foreground'
+              }`}
+            >
+              <TrendingUp className="w-5 h-5 mb-1" />
+              <span className="text-xs">Хөтөлбөр</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('stats')}
+              className={`flex flex-col items-center justify-center py-2 px-1 ${
+                activeTab === 'stats' ? 'text-primary' : 'text-muted-foreground'
+              }`}
+            >
+              <TrendingUp className="w-5 h-5 mb-1" />
+              <span className="text-xs">Стат</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('profile')}
+              className={`flex flex-col items-center justify-center py-2 px-1 ${
+                activeTab === 'profile' ? 'text-primary' : 'text-muted-foreground'
+              }`}
+            >
+              <User className="w-5 h-5 mb-1" />
+              <span className="text-xs">Профайл</span>
+            </button>
+          </div>
+        </div>
+        
+        {/* Mobile workout tab button - floating */}
+        {workoutStarted && (
+          <div className="sm:hidden fixed bottom-20 right-4 z-40">
+            <Button
+              onClick={() => setActiveTab('workout')}
+              size="lg"
+              className="rounded-full w-14 h-14 shadow-lg"
+            >
+              <Play className="w-6 h-6" />
+            </Button>
+          </div>
+        )}
 
         <TabsContent value="home">
           <div className="space-y-4">
@@ -1024,11 +1089,11 @@ export default function GymApp() {
                     </div>
                     <Progress value={workoutProgress} className="w-full" />
                   </div>
-                  <div className="flex gap-2">
-                    <Button onClick={finishWorkout} variant="destructive" className="flex-1">
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <Button onClick={finishWorkout} variant="destructive" className="flex-1 h-12 sm:h-10 text-base sm:text-sm">
                       Дасгал дуусгах
                     </Button>
-                    <Button onClick={exportCurrentWorkout} variant="outline" className="flex items-center gap-2">
+                    <Button onClick={exportCurrentWorkout} variant="outline" className="flex items-center justify-center gap-2 h-12 sm:h-10 text-base sm:text-sm">
                       <Download className="w-4 h-4" />
                       PDF
                     </Button>
@@ -1051,44 +1116,64 @@ export default function GymApp() {
                   <CardContent>
                     <div className="space-y-3">
                       {workoutExercise.sets.map((set, setIndex) => (
-                        <div key={set.id} className="flex items-center gap-2 p-3 border rounded">
-                          <Checkbox
-                            checked={set.completed}
-                            onCheckedChange={() => toggleSet(exerciseIndex, set.id)}
-                          />
-                          <span className="text-sm font-medium w-12">Сет {setIndex + 1}</span>
-                          <Input
-                            type="number"
-                            placeholder="Давталт"
-                            value={set.reps || ''}
-                            onChange={(e) => updateSet(exerciseIndex, set.id, 'reps', parseInt(e.target.value) || 0)}
-                            className="w-20"
-                          />
-                          <Input
-                            type="number"
-                            placeholder="Жин"
-                            value={set.weight || ''}
-                            onChange={(e) => updateSet(exerciseIndex, set.id, 'weight', parseFloat(e.target.value) || 0)}
-                            className="w-20"
-                          />
-                          <span className="text-sm">кг</span>
-                          <Input
-                            type="number"
-                            placeholder="RPE"
-                            value={set.rpe || ''}
-                            onChange={(e) => updateSet(exerciseIndex, set.id, 'rpe', parseInt(e.target.value) || 0)}
-                            className="w-16"
-                            min="1"
-                            max="10"
-                          />
+                        <div key={set.id} className="flex flex-col sm:flex-row items-start sm:items-center gap-3 p-3 sm:p-4 border rounded-lg">
+                          <div className="flex items-center gap-3 w-full sm:w-auto">
+                            <Checkbox
+                              checked={set.completed}
+                              onCheckedChange={() => toggleSet(exerciseIndex, set.id)}
+                              className="w-5 h-5 sm:w-4 sm:h-4"
+                            />
+                            <span className="text-sm font-medium min-w-[50px]">Сет {setIndex + 1}</span>
+                          </div>
+                          <div className="grid grid-cols-2 sm:flex gap-2 w-full sm:w-auto">
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-1">
+                              <label className="text-xs text-muted-foreground sm:hidden">Давталт</label>
+                              <Input
+                                type="number"
+                                placeholder="Давталт"
+                                value={set.reps || ''}
+                                onChange={(e) => updateSet(exerciseIndex, set.id, 'reps', parseInt(e.target.value) || 0)}
+                                className="w-full sm:w-20 h-10 sm:h-9 text-base sm:text-sm"
+                                inputMode="numeric"
+                              />
+                            </div>
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-1">
+                              <label className="text-xs text-muted-foreground sm:hidden">Жин (кг)</label>
+                              <div className="flex items-center gap-1 w-full sm:w-auto">
+                                <Input
+                                  type="number"
+                                  placeholder="Жин"
+                                  value={set.weight || ''}
+                                  onChange={(e) => updateSet(exerciseIndex, set.id, 'weight', parseFloat(e.target.value) || 0)}
+                                  className="w-full sm:w-20 h-10 sm:h-9 text-base sm:text-sm"
+                                  inputMode="decimal"
+                                />
+                                <span className="text-sm sm:block hidden">кг</span>
+                              </div>
+                            </div>
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-1">
+                              <label className="text-xs text-muted-foreground sm:hidden">RPE</label>
+                              <Input
+                                type="number"
+                                placeholder="RPE"
+                                value={set.rpe || ''}
+                                onChange={(e) => updateSet(exerciseIndex, set.id, 'rpe', parseInt(e.target.value) || 0)}
+                                className="w-full sm:w-16 h-10 sm:h-9 text-base sm:text-sm"
+                                min="1"
+                                max="10"
+                                inputMode="numeric"
+                              />
+                            </div>
+                          </div>
                           <Button
                             variant="ghost"
                             size="sm"
                             onClick={() => removeSet(exerciseIndex, set.id)}
                             disabled={workoutExercise.sets.length <= 1}
-                            className="w-8 h-8 p-0"
+                            className="w-full sm:w-10 h-10 sm:h-9 p-0 text-destructive hover:text-destructive"
                           >
                             <X className="w-4 h-4" />
+                            <span className="ml-2 sm:hidden">Устгах</span>
                           </Button>
                         </div>
                       ))}
