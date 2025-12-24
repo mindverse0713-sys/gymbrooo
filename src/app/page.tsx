@@ -571,7 +571,19 @@ export default function GymApp() {
       alert('Амжилттай бүртгэгдлээ!')
     } catch (error: any) {
       console.error('Sign up error:', error)
-      alert(error.message || 'Бүртгэл үүсгэхэд алдаа гарлаа')
+      // Try to get error message from response
+      let errorMessage = 'Бүртгэл үүсгэхэд алдаа гарлаа'
+      try {
+        if (error.response) {
+          const errorData = await error.response.json()
+          errorMessage = errorData.error || errorData.details || errorMessage
+        } else if (error.message) {
+          errorMessage = error.message
+        }
+      } catch (e) {
+        // If we can't parse error, use default message
+      }
+      alert(errorMessage)
     } finally {
       setIsLoggingIn(false)
     }

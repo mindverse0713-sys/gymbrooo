@@ -157,7 +157,11 @@ export async function createUser(user: Partial<User> & { password?: string }): P
     body: JSON.stringify(user),
   })
   if (!response.ok) {
-    throw new Error('Failed to create user')
+    const error = await response.json().catch(() => ({ error: 'Failed to create user' }))
+    const errorMessage = error.error || error.details || 'Failed to create user'
+    const apiError = new Error(errorMessage)
+    ;(apiError as any).response = response
+    throw apiError
   }
   return response.json()
 }

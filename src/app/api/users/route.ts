@@ -134,11 +134,25 @@ export async function POST(request: NextRequest) {
         )
       }
       
+      // Check if it's a column not found error (password column might be missing)
+      if (errorMessage.includes('column') && errorMessage.includes('does not exist') || errorCode === '42703') {
+        return NextResponse.json(
+          { 
+            error: 'Database column missing. Please add password column to User table in Supabase.',
+            details: errorMessage,
+            code: errorCode,
+            hint: 'Run: ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "password" TEXT;'
+          },
+          { status: 500 }
+        )
+      }
+      
       return NextResponse.json(
         { 
           error: 'Failed to create user',
           details: errorMessage,
-          code: errorCode
+          code: errorCode,
+          hint: error.hint
         },
         { status: 500 }
       )
