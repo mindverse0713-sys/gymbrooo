@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabase } from '@/lib/supabase'
 import { v4 as uuidv4 } from 'uuid'
+import bcrypt from 'bcryptjs'
 
 export async function GET(request: NextRequest) {
   try {
@@ -48,11 +49,18 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { email, name, age, gender, height, weight, experienceLevel } = body
+    const { email, password, name, age, gender, height, weight, experienceLevel } = body
 
     if (!email) {
       return NextResponse.json(
         { error: 'Email is required' },
+        { status: 400 }
+      )
+    }
+
+    if (!password) {
+      return NextResponse.json(
+        { error: 'Password is required' },
         { status: 400 }
       )
     }
@@ -85,9 +93,13 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10)
+
     const newUser = {
       id: uuidv4(),
       email,
+      password: hashedPassword,
       name: name || null,
       age: age || null,
       gender: gender || null,

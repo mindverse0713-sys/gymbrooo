@@ -35,6 +35,7 @@ import {
   createProgram,
   updateProgram,
   deleteProgram,
+  login,
   Analytics
 } from '@/lib/api'
 import { PDFExporter } from '@/lib/pdf-export'
@@ -489,31 +490,24 @@ export default function GymApp() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    if (!loginEmail.trim()) {
-      alert('И-мэйл оруулна уу')
+    if (!loginEmail.trim() || !loginPassword.trim()) {
+      alert('И-мэйл болон нууц үг оруулна уу')
       return
     }
 
     try {
       setIsLoggingIn(true)
       
-      // Try to find existing user
-      const existingUser = await getUser(loginEmail)
-      
-      if (existingUser) {
-        // User exists, log them in (no password check for demo app)
-        setCurrentUser(existingUser)
-        setIsLoggedIn(true)
-        setShowLogin(false)
-        setUserEmail(loginEmail)
-      } else {
-        // User doesn't exist, show message to sign up first
-        alert('Энэ имэйлтэй хэрэглэгч олдсонгүй. Эхлээд бүртгүүлнэ үү.')
-        setIsSignUp(true)
-      }
-    } catch (error) {
+      // Login with email and password
+      const user = await login(loginEmail, loginPassword)
+      setCurrentUser(user)
+      setIsLoggedIn(true)
+      setShowLogin(false)
+      setUserEmail(loginEmail)
+      setLoginPassword('')
+    } catch (error: any) {
       console.error('Login error:', error)
-      alert('Нэвтрэхдээ алдаа гарлаа')
+      alert(error.message || 'Нэвтрэхдээ алдаа гарлаа')
     } finally {
       setIsLoggingIn(false)
     }
@@ -522,8 +516,13 @@ export default function GymApp() {
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    if (!loginEmail.trim() || !signUpName.trim()) {
-      alert('Нэр болон имэйл оруулна уу')
+    if (!loginEmail.trim() || !loginPassword.trim() || !signUpName.trim()) {
+      alert('Бүх талбарыг бөглөнө үү')
+      return
+    }
+
+    if (loginPassword.length < 6) {
+      alert('Нууц үг хамгийн багадаа 6 тэмдэгт байх ёстой')
       return
     }
 
@@ -539,9 +538,10 @@ export default function GymApp() {
         return
       }
       
-      // Create new user
+      // Create new user with password
       const newUser = await createUser({
         email: loginEmail,
+        password: loginPassword,
         name: signUpName,
         experienceLevel: 'Intermediate'
       })
@@ -555,9 +555,9 @@ export default function GymApp() {
       setIsSignUp(false)
       
       alert('Амжилттай бүртгэгдлээ!')
-    } catch (error) {
+    } catch (error: any) {
       console.error('Sign up error:', error)
-      alert('Бүртгэл үүсгэхэд алдаа гарлаа')
+      alert(error.message || 'Бүртгэл үүсгэхэд алдаа гарлаа')
     } finally {
       setIsLoggingIn(false)
     }
@@ -766,12 +766,21 @@ export default function GymApp() {
                     className="h-10"
                   />
                 </div>
+                <div>
+                  <Label htmlFor="password" className="text-sm">Нууц үг</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    value={loginPassword}
+                    onChange={(e) => setLoginPassword(e.target.value)}
+                    placeholder="Нууц үг"
+                    required
+                    className="h-10"
+                  />
+                </div>
                 <Button type="submit" className="w-full h-10" disabled={isLoggingIn}>
                   {isLoggingIn ? 'Нэвтэрч байна...' : 'Нэвтрэх'}
                 </Button>
-                <p className="text-xs text-muted-foreground text-center">
-                  Бүртгэлтэй имэйл хаягаараа нэвтрэнэ үү
-                </p>
                 <div className="text-center">
                   <Button 
                     variant="link" 
@@ -806,6 +815,19 @@ export default function GymApp() {
                     onChange={(e) => setLoginEmail(e.target.value)}
                     placeholder="your@email.com"
                     required
+                    className="h-10"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="signUpPassword" className="text-sm">Нууц үг</Label>
+                  <Input
+                    id="signUpPassword"
+                    type="password"
+                    value={loginPassword}
+                    onChange={(e) => setLoginPassword(e.target.value)}
+                    placeholder="Хамгийн багадаа 6 тэмдэгт"
+                    required
+                    minLength={6}
                     className="h-10"
                   />
                 </div>

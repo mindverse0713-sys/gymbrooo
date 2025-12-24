@@ -133,7 +133,7 @@ export async function getUser(email: string): Promise<User | null> {
   return response.json()
 }
 
-export async function createUser(user: Partial<User>): Promise<User> {
+export async function createUser(user: Partial<User> & { password?: string }): Promise<User> {
   const response = await fetch(`${API_BASE}/api/users`, {
     method: 'POST',
     headers: {
