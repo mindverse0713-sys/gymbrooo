@@ -6,10 +6,12 @@ export function getSupabase(): SupabaseClient {
   // Lazy initialization - only check at runtime
   if (!supabaseClient) {
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL
-    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY
+    // Use service role key on server-side to bypass RLS (more secure than disabling RLS)
+    // Service role key should NEVER be exposed to client-side (no NEXT_PUBLIC_ prefix)
+    const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY
     
     if (!url || !key) {
-      throw new Error('Missing Supabase environment variables. Please set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY')
+      throw new Error('Missing Supabase environment variables. Please set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY (or NEXT_PUBLIC_SUPABASE_ANON_KEY)')
     }
     
     supabaseClient = createClient(url, key)
