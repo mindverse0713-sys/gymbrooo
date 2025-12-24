@@ -133,6 +133,21 @@ export async function getUser(email: string): Promise<User | null> {
   return response.json()
 }
 
+export async function login(email: string, password: string): Promise<User> {
+  const response = await fetch(`${API_BASE}/api/users/login`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ email, password }),
+  })
+  if (!response.ok) {
+    const error = await response.json()
+    throw new Error(error.error || 'Failed to login')
+  }
+  return response.json()
+}
+
 export async function createUser(user: Partial<User> & { password?: string }): Promise<User> {
   const response = await fetch(`${API_BASE}/api/users`, {
     method: 'POST',
