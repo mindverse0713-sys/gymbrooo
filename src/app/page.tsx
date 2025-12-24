@@ -106,19 +106,27 @@ export default function GymApp() {
         const exercisesData = await getExercises()
         setExercises(exercisesData)
         
-        // Load or create user
-        const userData = await getUser(userEmail)
-        if (userData) {
-          setCurrentUser(userData)
-        } else {
-          // User doesn't exist, create one
-          const newUser = await createUser({
-            email: userEmail,
-            name: 'Demo Хэрэглэгч',
-            experienceLevel: 'Intermediate'
-          })
-          setCurrentUser(newUser)
+        // Check if user is stored in localStorage
+        const storedUserEmail = localStorage.getItem('gym_user_email')
+        if (storedUserEmail) {
+          try {
+            const userData = await getUser(storedUserEmail)
+            if (userData) {
+              setCurrentUser(userData)
+              setIsLoggedIn(true)
+              setShowLogin(false)
+              setUserEmail(storedUserEmail)
+              return // User found, don't create new one
+            }
+          } catch (error) {
+            console.error('Error loading stored user:', error)
+            // Clear invalid stored email
+            localStorage.removeItem('gym_user_email')
+          }
         }
+        
+        // No stored user, show login
+        setShowLogin(true)
       } catch (error) {
         console.error('Error loading data:', error)
       } finally {
@@ -505,6 +513,9 @@ export default function GymApp() {
       setShowLogin(false)
       setUserEmail(loginEmail)
       setLoginPassword('')
+      
+      // Save user email to localStorage
+      localStorage.setItem('gym_user_email', loginEmail)
     } catch (error: any) {
       console.error('Login error:', error)
       alert(error.message || 'Нэвтрэхдээ алдаа гарлаа')
@@ -554,6 +565,9 @@ export default function GymApp() {
       setLoginPassword('')
       setIsSignUp(false)
       
+      // Save user email to localStorage
+      localStorage.setItem('gym_user_email', loginEmail)
+      
       alert('Амжилттай бүртгэгдлээ!')
     } catch (error: any) {
       console.error('Sign up error:', error)
@@ -572,6 +586,9 @@ export default function GymApp() {
     setSignUpName('')
     setIsSignUp(false)
     setShowProfile(false)
+    
+    // Clear stored user email
+    localStorage.removeItem('gym_user_email')
   }
 
   const handleDeleteAccount = async () => {
