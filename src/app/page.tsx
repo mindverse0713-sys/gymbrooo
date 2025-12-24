@@ -1345,6 +1345,59 @@ export default function GymApp() {
               </CardContent>
             </Card>
 
+            {analytics && analytics.detailedExercises && analytics.detailedExercises.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Дасгалын дэлгэрэнгүй мэдээлэл</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {analytics.detailedExercises.map((ex, index) => (
+                      <div key={index} className="border rounded-lg p-3 space-y-2">
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <h4 className="font-semibold text-base">{ex.exercise.mnName}</h4>
+                            <p className="text-xs text-muted-foreground mt-1">{ex.exercise.muscleGroup}</p>
+                          </div>
+                          <Badge variant="outline" className="ml-2">
+                            {ex.workoutCount} дасгал
+                          </Badge>
+                        </div>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-sm">
+                          <div>
+                            <span className="text-muted-foreground text-xs">Нийт сет:</span>
+                            <div className="font-medium">{ex.completedSets}/{ex.totalSets}</div>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground text-xs">Нийт жин:</span>
+                            <div className="font-medium">{ex.totalVolume.toFixed(0)}кг</div>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground text-xs">Дундаж жин:</span>
+                            <div className="font-medium">{ex.avgWeight.toFixed(1)}кг</div>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground text-xs">Хамгийн их жин:</span>
+                            <div className="font-medium">{ex.maxWeight}кг</div>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground text-xs">Дундаж давталт:</span>
+                            <div className="font-medium">{ex.avgReps.toFixed(1)}</div>
+                          </div>
+                          {ex.avgRPE > 0 && (
+                            <div>
+                              <span className="text-muted-foreground text-xs">Дундаж RPE:</span>
+                              <div className="font-medium">{ex.avgRPE.toFixed(1)}</div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             {analytics && analytics.personalRecords.length > 0 && (
               <Card>
                 <CardHeader>

@@ -91,6 +91,17 @@ export interface Analytics {
     exercise: Exercise
     prWeight: number
   }>
+  detailedExercises?: Array<{
+    exercise: Exercise
+    totalSets: number
+    completedSets: number
+    totalVolume: number
+    avgWeight: number
+    avgReps: number
+    maxWeight: number
+    avgRPE: number
+    workoutCount: number
+  }>
   chartData: Array<{
     date: string
     count: number

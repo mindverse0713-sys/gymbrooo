@@ -108,9 +108,15 @@ export async function GET(request: NextRequest) {
 
     // Find PRs (personal records) - highest volume per exercise
     const exercisePRs = new Map()
+    // Group sets by exercise for detailed stats
+    const exerciseStats = new Map()
+    
     allSets.forEach(set => {
       if (set.completed && set.exercise) {
         const exerciseId = set.exercise.id
+        const exercise = set.exercise
+        
+        // Calculate PRs
         const currentPR = exercisePRs.get(exerciseId) || { weight: 0, reps: 0, volume: 0 }
         const setVolume = set.weight * set.reps
         if (setVolume > currentPR.volume || (setVolume === currentPR.volume && set.weight > currentPR.weight)) {
@@ -120,8 +126,62 @@ export async function GET(request: NextRequest) {
             volume: setVolume
           })
         }
+        
+        // Calculate detailed stats per exercise
+        if (!exerciseStats.has(exerciseId)) {
+          exerciseStats.set(exerciseId, {
+            exercise,
+            totalSets: 0,
+            completedSets: 0,
+            totalVolume: 0,
+            totalReps: 0,
+            avgWeight: 0,
+            avgReps: 0,
+            maxWeight: 0,
+            totalRPE: 0,
+            rpeCount: 0,
+            workouts: new Set()
+          })
+        }
+        
+        const stats = exerciseStats.get(exerciseId)
+        stats.totalSets++
+        if (set.completed) {
+          stats.completedSets++
+          stats.totalVolume += set.weight * set.reps
+          stats.totalReps += set.reps
+          if (set.weight > stats.maxWeight) {
+            stats.maxWeight = set.weight
+          }
+          if (set.rpe) {
+            stats.totalRPE += set.rpe
+            stats.rpeCount++
+          }
+          // Track which workout this set belongs to
+          stats.workouts.add(set.workoutId)
+        }
       }
     })
+
+    // Calculate averages for each exercise
+    const detailedExercises = Array.from(exerciseStats.values()).map(stats => {
+      const workoutCount = stats.workouts.size
+      const avgWeight = stats.completedSets > 0 ? stats.totalVolume / stats.totalReps : 0
+      const avgReps = stats.completedSets > 0 ? stats.totalReps / stats.completedSets : 0
+      const avgRPE = stats.rpeCount > 0 ? stats.totalRPE / stats.rpeCount : 0
+      
+      return {
+        exercise: stats.exercise,
+        totalSets: stats.totalSets,
+        completedSets: stats.completedSets,
+        totalVolume: stats.totalVolume,
+        avgWeight: Math.round(avgWeight * 10) / 10,
+        avgReps: Math.round(avgReps * 10) / 10,
+        maxWeight: stats.maxWeight,
+        avgRPE: Math.round(avgRPE * 10) / 10,
+        workoutCount
+      }
+    }).sort((a, b) => b.totalVolume - a.totalVolume) // Sort by total volume
 
     // Get exercise details for PRs
     const prExerciseIds = Array.from(exercisePRs.keys())
@@ -157,6 +217,7 @@ export async function GET(request: NextRequest) {
         averageRPE: Math.round(averageRPE * 10) / 10
       },
       personalRecords,
+      detailedExercises, // Add detailed exercise statistics
       chartData,
       period
     }
