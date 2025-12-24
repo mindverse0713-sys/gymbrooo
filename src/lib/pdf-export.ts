@@ -62,20 +62,17 @@ export class PDFExporter {
   async exportWorkout(data: WorkoutExportData): Promise<void> {
     const { workout, exercises } = data
 
-    // Create HTML element for better text rendering
-    const container = document.createElement('div')
-    container.style.width = '794px' // Use pixels instead of mm for better compatibility
-    container.style.minHeight = '1123px' // A4 height in pixels
-    container.style.padding = '0'
-    container.style.backgroundColor = '#ffffff'
-    container.style.fontFamily = 'Arial, sans-serif'
-    container.style.position = 'fixed'
-    container.style.top = '0'
-    container.style.left = '0'
-    container.style.opacity = '0'
-    container.style.pointerEvents = 'none'
-    container.style.zIndex = '-1'
-    document.body.appendChild(container)
+    // Try using html2canvas first, fallback to direct PDF generation if it fails
+    try {
+      // Create HTML element for better text rendering
+      const container = document.createElement('div')
+      container.style.position = 'absolute'
+      container.style.left = '-9999px'
+      container.style.top = '0'
+      container.style.width = '794px'
+      container.style.backgroundColor = '#ffffff'
+      container.style.fontFamily = 'Arial, sans-serif'
+      document.body.appendChild(container)
 
     let htmlContent = `
       <div style="width: 794px; background: white; padding: 0; font-family: Arial, sans-serif;">
@@ -167,69 +164,177 @@ export class PDFExporter {
 
     container.innerHTML = htmlContent
 
-    try {
-      // Wait a bit for the DOM to render
-      await new Promise(resolve => setTimeout(resolve, 200))
-      
-      // Get the actual content element (first child div)
-      const contentElement = container.firstElementChild as HTMLElement
-      if (!contentElement) {
-        throw new Error('Failed to create PDF content element')
+      try {
+        // Wait for DOM to render
+        await new Promise(resolve => setTimeout(resolve, 300))
+        
+        // Get the content element
+        const contentElement = container.firstElementChild as HTMLElement
+        if (!contentElement) {
+          throw new Error('Content element not found')
+        }
+
+        // Convert HTML to canvas
+        const canvas = await html2canvas(contentElement, {
+          scale: 1.5,
+          useCORS: true,
+          logging: false,
+          backgroundColor: '#ffffff'
+        })
+
+        // Create PDF from canvas
+        const imgData = canvas.toDataURL('image/png', 0.95)
+        const imgWidth = 210 // A4 width in mm
+        const imgHeight = (canvas.height * imgWidth) / canvas.width
+        
+        this.doc = new jsPDF('p', 'mm', 'a4')
+        
+        // Handle multi-page PDF
+        const pageHeight = 297 // A4 height in mm
+        let heightLeft = imgHeight
+        let position = 0
+        
+        this.doc.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight)
+        heightLeft -= pageHeight
+        
+        while (heightLeft > 0) {
+          position = heightLeft - imgHeight
+          this.doc.addPage()
+          this.doc.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight)
+          heightLeft -= pageHeight
+        }
+
+        // Add footer to all pages
+        const pageCount = this.doc.getNumberOfPages()
+        for (let i = 1; i <= pageCount; i++) {
+          this.doc.setPage(i)
+          this.doc.setFontSize(8)
+          this.doc.setTextColor(128, 128, 128)
+          this.doc.text(
+            `Хуудас ${i} / ${pageCount}`,
+            105,
+            290,
+            { align: 'center' }
+          )
+        }
+
+        // Clean up
+        if (container.parentNode) {
+          document.body.removeChild(container)
+        }
+
+        // Save the PDF
+        const fileName = `gym-workout-${new Date(workout.date).toISOString().split('T')[0]}.pdf`
+        this.doc.save(fileName)
+      } catch (html2canvasError) {
+        // Clean up container
+        if (container.parentNode) {
+          document.body.removeChild(container)
+        }
+        
+        // Fallback to direct PDF generation
+        console.warn('html2canvas failed, using fallback method:', html2canvasError)
+        await this.exportWorkoutFallback(data)
       }
-      
-      // Convert HTML to canvas
-      const canvas = await html2canvas(contentElement, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        backgroundColor: '#ffffff',
-        removeContainer: false,
-        allowTaint: false
-      })
-
-      // Create PDF from canvas
-      const imgData = canvas.toDataURL('image/png')
-      const imgWidth = 210 // A4 width in mm
-      const imgHeight = (canvas.height * imgWidth) / canvas.width
-      
-      this.doc = new jsPDF('p', 'mm', 'a4')
-      this.doc.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight)
-
-      // Add footer if needed (for multiple pages)
-      const pageCount = this.doc.getNumberOfPages()
-      for (let i = 1; i <= pageCount; i++) {
-        this.doc.setPage(i)
-        this.doc.setFontSize(8)
-        this.doc.setTextColor(128, 128, 128)
-        this.doc.text(
-          `Gym Дэвтэр - Хуудас ${i} / ${pageCount}`,
-          105,
-          285,
-          { align: 'center' }
-        )
-        this.doc.text(
-          new Date().toLocaleDateString('mn-MN'),
-          190,
-          285,
-          { align: 'right' }
-        )
-      }
-
-      // Clean up
-      document.body.removeChild(container)
-
-      // Save the PDF
-      const fileName = `gym-workout-${new Date(workout.date).toISOString().split('T')[0]}.pdf`
-      this.doc.save(fileName)
     } catch (error) {
-      // Clean up container even if there's an error
-      if (container && container.parentNode) {
-        document.body.removeChild(container)
-      }
       console.error('Error generating PDF:', error)
-      // Re-throw with more context
       throw new Error(`PDF generation failed: ${error instanceof Error ? error.message : String(error)}`)
     }
+  }
+
+  // Fallback method using direct jsPDF text rendering (for when html2canvas fails)
+  private async exportWorkoutFallback(data: WorkoutExportData): Promise<void> {
+    const { workout, exercises } = data
+    this.doc = new jsPDF('p', 'mm', 'a4')
+
+    // Header
+    this.doc.setFillColor(59, 130, 246)
+    this.doc.rect(0, 0, 210, 30, 'F')
+    this.doc.setTextColor(255, 255, 255)
+    this.doc.setFontSize(20)
+    this.doc.setFont('helvetica', 'bold')
+    this.doc.text('Gym Detver', 105, 20, { align: 'center' })
+    this.doc.setFontSize(14)
+    this.doc.text('Dasgaliin Tailan', 105, 28, { align: 'center' })
+    
+    this.doc.setTextColor(0, 0, 0)
+    let yPosition = 40
+
+    // Workout info
+    this.doc.setFontSize(11)
+    const dateText = new Date(workout.date).toLocaleDateString('en-US', { 
+      year: 'numeric', month: 'long', day: 'numeric', weekday: 'long'
+    })
+    this.doc.text(`Date: ${dateText}`, 20, yPosition)
+    this.doc.text(`Status: ${workout.completed ? 'Completed' : 'Incomplete'}`, 20, yPosition + 7)
+    if (workout.notes) {
+      this.doc.text(`Notes: ${workout.notes}`, 20, yPosition + 14)
+      yPosition += 7
+    }
+    yPosition += 20
+
+    // Exercises
+    this.doc.setFontSize(16)
+    this.doc.setFont('helvetica', 'bold')
+    this.doc.text('Exercises', 20, yPosition)
+    yPosition += 10
+
+    exercises.forEach((exercise, index) => {
+      if (yPosition > 270) {
+        this.doc.addPage()
+        yPosition = 20
+      }
+
+      // Exercise header
+      this.doc.setFontSize(12)
+      this.doc.setFont('helvetica', 'bold')
+      this.doc.text(`${index + 1}. ${exercise.mnName}`, 20, yPosition)
+      this.doc.setFont('helvetica', 'normal')
+      this.doc.setFontSize(10)
+      this.doc.text(`${exercise.muscleGroup}`, 20, yPosition + 7)
+      yPosition += 15
+
+      // Sets table
+      this.doc.setFontSize(9)
+      this.doc.setFont('helvetica', 'bold')
+      this.doc.text('Set', 25, yPosition)
+      this.doc.text('Reps', 55, yPosition)
+      this.doc.text('Weight', 85, yPosition)
+      this.doc.text('RPE', 115, yPosition)
+      this.doc.text('Done', 145, yPosition)
+      yPosition += 7
+
+      this.doc.setFont('helvetica', 'normal')
+      let totalVolume = 0
+      let completedSets = 0
+      exercise.sets.forEach(set => {
+        this.doc.text(`${set.order}`, 25, yPosition)
+        this.doc.text(`${set.reps}`, 55, yPosition)
+        this.doc.text(`${set.weight}`, 85, yPosition)
+        this.doc.text(`${set.rpe || '-'}`, 115, yPosition)
+        this.doc.text(set.completed ? 'Yes' : 'No', 145, yPosition)
+        totalVolume += set.reps * set.weight
+        if (set.completed) completedSets++
+        yPosition += 6
+      })
+
+      this.doc.setFontSize(8)
+      this.doc.text(`Total Volume: ${totalVolume.toFixed(1)} kg`, 25, yPosition)
+      this.doc.text(`Completed: ${completedSets}/${exercise.sets.length}`, 120, yPosition)
+      yPosition += 12
+    })
+
+    // Footer
+    const pageCount = this.doc.getNumberOfPages()
+    for (let i = 1; i <= pageCount; i++) {
+      this.doc.setPage(i)
+      this.doc.setFontSize(8)
+      this.doc.setTextColor(128, 128, 128)
+      this.doc.text(`Page ${i} / ${pageCount}`, 105, 290, { align: 'center' })
+    }
+
+    const fileName = `gym-workout-${new Date(workout.date).toISOString().split('T')[0]}.pdf`
+    this.doc.save(fileName)
   }
 
   async exportAnalytics(data: AnalyticsExportData): Promise<void> {
