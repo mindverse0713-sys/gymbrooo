@@ -489,8 +489,8 @@ export default function GymApp() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    if (!loginEmail.trim() || !loginPassword.trim()) {
-      alert('И-мэйл болон нууцэв нэгэлээ оруулна уу')
+    if (!loginEmail.trim()) {
+      alert('И-мэйл оруулна уу')
       return
     }
 
@@ -501,31 +501,15 @@ export default function GymApp() {
       const existingUser = await getUser(loginEmail)
       
       if (existingUser) {
-        // Simple password check (in production, use proper hashing)
-        if (existingUser.email === loginEmail && loginPassword === 'demo123') {
-          setCurrentUser(existingUser)
-          setIsLoggedIn(true)
-          setShowLogin(false)
-          setUserEmail(loginEmail)
-        } else {
-          alert('Нууц үг эсвэл имэйл буруу байна')
-        }
+        // User exists, log them in (no password check for demo app)
+        setCurrentUser(existingUser)
+        setIsLoggedIn(true)
+        setShowLogin(false)
+        setUserEmail(loginEmail)
       } else {
-        // Create new user (in production, add proper validation)
-        if (loginPassword === 'demo123') {
-          const newUser = await createUser({
-            email: loginEmail,
-            name: loginEmail.split('@')[0],
-            experienceLevel: 'Intermediate'
-          })
-          
-          setCurrentUser(newUser)
-          setIsLoggedIn(true)
-          setShowLogin(false)
-          setUserEmail(loginEmail)
-        } else {
-          alert('Шинэ хэрэглэгч үүсгэхийн тулд "demo123" нууц үг оруулна уу')
-        }
+        // User doesn't exist, show message to sign up first
+        alert('Энэ имэйлтэй хэрэглэгч олдсонгүй. Эхлээд бүртгүүлнэ үү.')
+        setIsSignUp(true)
       }
     } catch (error) {
       console.error('Login error:', error)
@@ -833,18 +817,6 @@ export default function GymApp() {
                     value={loginEmail}
                     onChange={(e) => setLoginEmail(e.target.value)}
                     placeholder="your@email.com"
-                    required
-                    className="h-10"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="password" className="text-sm">Нууц үг</Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    value={loginPassword}
-                    onChange={(e) => setLoginPassword(e.target.value)}
-                    placeholder="Нууц үг"
                     required
                     className="h-10"
                   />
