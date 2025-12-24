@@ -115,39 +115,51 @@ export class PDFExporter {
       // Add Resistance Training Table
       if (resistanceExercises.length > 0) {
         htmlContent += `
-        <div style="margin-bottom: 30px;">
-          <h2 style="font-size: 14px; font-weight: bold; margin-bottom: 10px; text-transform: uppercase;">Resistance Training</h2>
-          <table style="width: 100%; border-collapse: collapse; font-size: 10px; border: 1px solid #000;">
-            <thead>
-              <tr style="background: #f0f0f0; border-bottom: 2px solid #000;">
-                <th style="border: 1px solid #000; padding: 8px; text-align: left; font-weight: bold; width: 150px;">EXERCISE</th>
-                <th colspan="2" style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">Set: 1</th>
-                <th colspan="2" style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">Set: 2</th>
-                <th colspan="2" style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">Set: 3</th>
-                <th colspan="2" style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">Set: 4</th>
-                <th colspan="2" style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">Set: 5</th>
-              </tr>
-              <tr style="background: #f0f0f0; border-bottom: 2px solid #000;">
-                <th style="border: 1px solid #000; padding: 4px;"></th>
-                <th style="border: 1px solid #000; padding: 4px; text-align: center; font-weight: normal; font-size: 9px;">WEIGHT</th>
-                <th style="border: 1px solid #000; padding: 4px; text-align: center; font-weight: normal; font-size: 9px;">REPS</th>
-                <th style="border: 1px solid #000; padding: 4px; text-align: center; font-weight: normal; font-size: 9px;">WEIGHT</th>
-                <th style="border: 1px solid #000; padding: 4px; text-align: center; font-weight: normal; font-size: 9px;">REPS</th>
-                <th style="border: 1px solid #000; padding: 4px; text-align: center; font-weight: normal; font-size: 9px;">WEIGHT</th>
-                <th style="border: 1px solid #000; padding: 4px; text-align: center; font-weight: normal; font-size: 9px;">REPS</th>
-                <th style="border: 1px solid #000; padding: 4px; text-align: center; font-weight: normal; font-size: 9px;">WEIGHT</th>
-                <th style="border: 1px solid #000; padding: 4px; text-align: center; font-weight: normal; font-size: 9px;">REPS</th>
-                <th style="border: 1px solid #000; padding: 4px; text-align: center; font-weight: normal; font-size: 9px;">WEIGHT</th>
-                <th style="border: 1px solid #000; padding: 4px; text-align: center; font-weight: normal; font-size: 9px;">REPS</th>
-              </tr>
-            </thead>
-            <tbody>
+        <table style="width: 100%; border-collapse: collapse; font-size: 10px; border: 1px solid #000;">
+          <thead>
+            <tr style="background: #f0f0f0; border-bottom: 2px solid #000;">
+              <th rowspan="2" style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold; vertical-align: middle;">Resistance<br/>Training</th>
+              <th colspan="2" style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">Set : 1</th>
+              <th colspan="2" style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">Set : 2</th>
+              <th colspan="2" style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">Set : 3</th>
+              <th colspan="2" style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">Set : 4</th>
+              <th colspan="2" style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">Set : 5</th>
+              <th style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">RPE</th>
+              <th style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">VOLUME</th>
+            </tr>
+            <tr style="background: #f0f0f0; border-bottom: 2px solid #000;">
+              <th style="border: 1px solid #000; padding: 4px; text-align: center; font-weight: normal; font-size: 9px;">WEIGHT</th>
+              <th style="border: 1px solid #000; padding: 4px; text-align: center; font-weight: normal; font-size: 9px;">REPS</th>
+              <th style="border: 1px solid #000; padding: 4px; text-align: center; font-weight: normal; font-size: 9px;">WEIGHT</th>
+              <th style="border: 1px solid #000; padding: 4px; text-align: center; font-weight: normal; font-size: 9px;">REPS</th>
+              <th style="border: 1px solid #000; padding: 4px; text-align: center; font-weight: normal; font-size: 9px;">WEIGHT</th>
+              <th style="border: 1px solid #000; padding: 4px; text-align: center; font-weight: normal; font-size: 9px;">REPS</th>
+              <th style="border: 1px solid #000; padding: 4px; text-align: center; font-weight: normal; font-size: 9px;">WEIGHT</th>
+              <th style="border: 1px solid #000; padding: 4px; text-align: center; font-weight: normal; font-size: 9px;">REPS</th>
+              <th style="border: 1px solid #000; padding: 4px; text-align: center; font-weight: normal; font-size: 9px;">WEIGHT</th>
+              <th style="border: 1px solid #000; padding: 4px; text-align: center; font-weight: normal; font-size: 9px;">REPS</th>
+              <th style="border: 1px solid #000; padding: 4px; text-align: center; font-weight: normal; font-size: 9px;"></th>
+              <th style="border: 1px solid #000; padding: 4px; text-align: center; font-weight: normal; font-size: 9px;"></th>
+            </tr>
+            <tr style="background: #f0f0f0; border-bottom: 2px solid #000;">
+              <th style="border: 1px solid #000; padding: 8px; text-align: left; font-weight: bold;">EXERCISE</th>
+              <th colspan="10" style="border: 1px solid #000; padding: 4px;"></th>
+              <th style="border: 1px solid #000; padding: 4px;"></th>
+              <th style="border: 1px solid #000; padding: 4px;"></th>
+            </tr>
+          </thead>
+          <tbody>
         `
 
-        // Add resistance exercises (max 8 rows)
-        resistanceExercises.slice(0, 8).forEach((exercise) => {
+        // Add resistance exercises (max 10 rows as shown in template)
+        resistanceExercises.slice(0, 10).forEach((exercise) => {
           htmlContent += '<tr>'
           htmlContent += `<td style="border: 1px solid #000; padding: 6px; font-weight: bold;">${exercise.name}</td>`
+          
+          // Calculate total volume and average RPE for this exercise
+          let totalVolume = 0
+          let rpeSum = 0
+          let rpeCount = 0
           
           // Add up to 5 sets
           for (let i = 0; i < 5; i++) {
@@ -155,20 +167,32 @@ export class PDFExporter {
             if (set && set.completed) {
               htmlContent += `<td style="border: 1px solid #000; padding: 6px; text-align: center;">${set.weight}</td>`
               htmlContent += `<td style="border: 1px solid #000; padding: 6px; text-align: center;">${set.reps}</td>`
+              totalVolume += set.weight * set.reps
+              if (set.rpe) {
+                rpeSum += set.rpe
+                rpeCount++
+              }
             } else {
               htmlContent += '<td style="border: 1px solid #000; padding: 6px; text-align: center;"></td>'
               htmlContent += '<td style="border: 1px solid #000; padding: 6px; text-align: center;"></td>'
             }
           }
           
+          // Add RPE (average of all sets with RPE)
+          const avgRPE = rpeCount > 0 ? (rpeSum / rpeCount).toFixed(1) : ''
+          htmlContent += `<td style="border: 1px solid #000; padding: 6px; text-align: center;">${avgRPE}</td>`
+          
+          // Add Volume
+          htmlContent += `<td style="border: 1px solid #000; padding: 6px; text-align: center;">${totalVolume.toFixed(0)}</td>`
+          
           htmlContent += '</tr>'
         })
 
-        // Fill remaining rows if less than 8 exercises
-        for (let i = resistanceExercises.length; i < 8; i++) {
+        // Fill remaining rows if less than 10 exercises
+        for (let i = resistanceExercises.length; i < 10; i++) {
           htmlContent += '<tr>'
           htmlContent += '<td style="border: 1px solid #000; padding: 6px;"></td>'
-          for (let j = 0; j < 10; j++) {
+          for (let j = 0; j < 12; j++) {
             htmlContent += '<td style="border: 1px solid #000; padding: 6px;"></td>'
           }
           htmlContent += '</tr>'
@@ -177,7 +201,6 @@ export class PDFExporter {
         htmlContent += `
             </tbody>
           </table>
-        </div>
         `
       }
 
