@@ -124,8 +124,8 @@ export class PDFExporter {
               <th colspan="2" style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">Set : 3</th>
               <th colspan="2" style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">Set : 4</th>
               <th colspan="2" style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">Set : 5</th>
-              <th style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">RPE</th>
-              <th style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">VOLUME</th>
+              <th rowspan="2" style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold; vertical-align: middle;">RPE</th>
+              <th rowspan="2" style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold; vertical-align: middle;">VOLUME</th>
             </tr>
             <tr style="background: #f0f0f0; border-bottom: 2px solid #000;">
               <th style="border: 1px solid #000; padding: 4px; text-align: center; font-weight: normal; font-size: 9px;">WEIGHT</th>
@@ -138,8 +138,6 @@ export class PDFExporter {
               <th style="border: 1px solid #000; padding: 4px; text-align: center; font-weight: normal; font-size: 9px;">REPS</th>
               <th style="border: 1px solid #000; padding: 4px; text-align: center; font-weight: normal; font-size: 9px;">WEIGHT</th>
               <th style="border: 1px solid #000; padding: 4px; text-align: center; font-weight: normal; font-size: 9px;">REPS</th>
-              <th style="border: 1px solid #000; padding: 4px; text-align: center; font-weight: normal; font-size: 9px;"></th>
-              <th style="border: 1px solid #000; padding: 4px; text-align: center; font-weight: normal; font-size: 9px;"></th>
             </tr>
             <tr style="background: #f0f0f0; border-bottom: 2px solid #000;">
               <th style="border: 1px solid #000; padding: 8px; text-align: left; font-weight: bold;">EXERCISE</th>
