@@ -62,6 +62,10 @@ export class PDFExporter {
   async exportWorkout(data: WorkoutExportData): Promise<void> {
     const { workout, exercises } = data
 
+    // Separate resistance training and cardio exercises
+    const resistanceExercises = exercises.filter(ex => ex.muscleGroup !== 'Cardio')
+    const cardioExercises = exercises.filter(ex => ex.muscleGroup === 'Cardio')
+
     // Try using html2canvas first, fallback to direct PDF generation if it fails
     try {
       // Create HTML element for better text rendering
@@ -74,95 +78,163 @@ export class PDFExporter {
       container.style.fontFamily = 'Arial, sans-serif'
       document.body.appendChild(container)
 
-    let htmlContent = `
-      <div style="width: 794px; background: white; padding: 0; font-family: Arial, sans-serif;">
+      // Parse workout time from notes if available
+      let workoutTimeText = 'N/A'
+      if (workout.notes && workout.notes.includes('completed in')) {
+        const timeMatch = workout.notes.match(/(\d+):(\d+)/)
+        if (timeMatch) {
+          workoutTimeText = `${timeMatch[1]} min ${timeMatch[2]} sec`
+        }
+      }
+
+      // Get unique muscle groups
+      const muscleGroups = [...new Set(resistanceExercises.map(ex => ex.muscleGroup))].join(', ')
+
+      let htmlContent = `
+      <div style="width: 794px; background: white; padding: 20px; font-family: Arial, sans-serif;">
         <!-- Header -->
-        <div style="background: #3b82f6; color: white; padding: 20px 15px; text-align: center;">
-          <h1 style="margin: 0; font-size: 24px; font-weight: bold;">💪 Gym Дэвтэр</h1>
-          <p style="margin: 5px 0 0 0; font-size: 16px;">Дасгалын Тайлан</p>
+        <div style="text-align: center; margin-bottom: 30px;">
+          <h1 style="margin: 0; font-size: 32px; font-weight: bold; letter-spacing: 2px;">EXERCISE TRACKER</h1>
         </div>
         
         <!-- Workout Info -->
-        <div style="background: #f3f4f6; padding: 15px; margin: 10px 15px; border-radius: 8px;">
-          <div style="margin-bottom: 8px;">
-            <strong>📅 Огноо:</strong> ${new Date(workout.date).toLocaleDateString('mn-MN', { 
+        <div style="margin-bottom: 30px; font-size: 12px;">
+          <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+            <div><strong>Date:</strong> ${new Date(workout.date).toLocaleDateString('en-US', { 
               year: 'numeric', 
               month: 'long', 
               day: 'numeric',
               weekday: 'long'
-            })}
+            })}</div>
+            <div><strong>Total Workout Time:</strong> ${workoutTimeText}</div>
           </div>
-          <div style="margin-bottom: 8px;">
-            <strong>✓ Төлөв:</strong> ${workout.completed ? '✅ Дууссан' : '⏳ Дуусаагүй'}
-          </div>
-          ${workout.notes ? `<div><strong>📝 Тэмдэглэл:</strong> ${workout.notes}</div>` : ''}
+          <div><strong>Muscle Group:</strong> ${muscleGroups || 'N/A'}</div>
         </div>
         
-        <!-- Exercises -->
-        <div style="padding: 15px;">
-          <h2 style="font-size: 18px; font-weight: bold; margin-bottom: 15px;">🏋️ Дасгалууд</h2>
-    `
-
-    exercises.forEach((exercise, index) => {
-      const totalVolume = exercise.sets.reduce((sum, set) => sum + (set.reps * set.weight), 0)
-      const completedSets = exercise.sets.filter(set => set.completed).length
-      
-      htmlContent += `
-        <div style="margin-bottom: 20px; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden;">
-          <!-- Exercise Header -->
-          <div style="background: #e5e7eb; padding: 12px 15px;">
-            <div style="font-size: 14px; font-weight: bold; color: #3b82f6; margin-bottom: 5px;">
-              ${index + 1}. ${exercise.name}
-            </div>
-            <div style="font-size: 10px; color: #666;">
-              💪 ${exercise.muscleGroup} ${exercise.equipment ? `• ⚙️ ${exercise.equipment}` : ''}
-            </div>
-          </div>
-          
-          <!-- Sets Table -->
-          <div style="padding: 15px;">
-            <table style="width: 100%; border-collapse: collapse; font-size: 9px;">
-              <thead>
-                <tr style="background: #f9fafb;">
-                  <th style="padding: 8px; text-align: left; font-weight: bold;">Сет</th>
-                  <th style="padding: 8px; text-align: left; font-weight: bold;">Давталт</th>
-                  <th style="padding: 8px; text-align: left; font-weight: bold;">Жин (кг)</th>
-                  <th style="padding: 8px; text-align: left; font-weight: bold;">RPE</th>
-                  <th style="padding: 8px; text-align: left; font-weight: bold;">Гүйцэтгэсэн</th>
-                </tr>
-              </thead>
-              <tbody>
+        <!-- Resistance Training Table -->
+        ${resistanceExercises.length > 0 ? `
+        <div style="margin-bottom: 30px;">
+          <h2 style="font-size: 14px; font-weight: bold; margin-bottom: 10px; text-transform: uppercase;">Resistance Training</h2>
+          <table style="width: 100%; border-collapse: collapse; font-size: 10px; border: 1px solid #000;">
+            <thead>
+              <tr style="background: #f0f0f0; border-bottom: 2px solid #000;">
+                <th style="border: 1px solid #000; padding: 8px; text-align: left; font-weight: bold; width: 150px;">EXERCISE</th>
+                <th colspan="2" style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">Set: 1</th>
+                <th colspan="2" style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">Set: 2</th>
+                <th colspan="2" style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">Set: 3</th>
+                <th colspan="2" style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">Set: 4</th>
+                <th colspan="2" style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">Set: 5</th>
+              </tr>
+              <tr style="background: #f0f0f0; border-bottom: 2px solid #000;">
+                <th style="border: 1px solid #000; padding: 4px;"></th>
+                <th style="border: 1px solid #000; padding: 4px; text-align: center; font-weight: normal; font-size: 9px;">WEIGHT</th>
+                <th style="border: 1px solid #000; padding: 4px; text-align: center; font-weight: normal; font-size: 9px;">REPS</th>
+                <th style="border: 1px solid #000; padding: 4px; text-align: center; font-weight: normal; font-size: 9px;">WEIGHT</th>
+                <th style="border: 1px solid #000; padding: 4px; text-align: center; font-weight: normal; font-size: 9px;">REPS</th>
+                <th style="border: 1px solid #000; padding: 4px; text-align: center; font-weight: normal; font-size: 9px;">WEIGHT</th>
+                <th style="border: 1px solid #000; padding: 4px; text-align: center; font-weight: normal; font-size: 9px;">REPS</th>
+                <th style="border: 1px solid #000; padding: 4px; text-align: center; font-weight: normal; font-size: 9px;">WEIGHT</th>
+                <th style="border: 1px solid #000; padding: 4px; text-align: center; font-weight: normal; font-size: 9px;">REPS</th>
+                <th style="border: 1px solid #000; padding: 4px; text-align: center; font-weight: normal; font-size: 9px;">WEIGHT</th>
+                <th style="border: 1px solid #000; padding: 4px; text-align: center; font-weight: normal; font-size: 9px;">REPS</th>
+              </tr>
+            </thead>
+            <tbody>
       `
-      
-      exercise.sets.forEach((set, setIndex) => {
-        htmlContent += `
-          <tr style="background: ${setIndex % 2 === 0 ? '#ffffff' : '#f9fafb'};">
-            <td style="padding: 6px;">${set.order}</td>
-            <td style="padding: 6px;">${set.reps}</td>
-            <td style="padding: 6px;">${set.weight}</td>
-            <td style="padding: 6px;">${set.rpe || '-'}</td>
-            <td style="padding: 6px; font-weight: bold;">${set.completed ? '✓' : '○'}</td>
-          </tr>
-        `
+
+      // Add resistance exercises (max 8 rows)
+      resistanceExercises.slice(0, 8).forEach((exercise) => {
+        htmlContent += '<tr>'
+        htmlContent += `<td style="border: 1px solid #000; padding: 6px; font-weight: bold;">${exercise.name}</td>`
+        
+        // Add up to 5 sets
+        for (let i = 0; i < 5; i++) {
+          const set = exercise.sets[i]
+          if (set && set.completed) {
+            htmlContent += `<td style="border: 1px solid #000; padding: 6px; text-align: center;">${set.weight}</td>`
+            htmlContent += `<td style="border: 1px solid #000; padding: 6px; text-align: center;">${set.reps}</td>`
+          } else {
+            htmlContent += '<td style="border: 1px solid #000; padding: 6px; text-align: center;"></td>'
+            htmlContent += '<td style="border: 1px solid #000; padding: 6px; text-align: center;"></td>'
+          }
+        }
+        
+        htmlContent += '</tr>'
       })
-      
-      htmlContent += `
-              </tbody>
-            </table>
-            <div style="margin-top: 10px; font-size: 9px; font-weight: bold;">
-              Нийт эзэлхүүн: ${totalVolume.toFixed(1)} кг • Гүйцэтгэсэн: ${completedSets}/${exercise.sets.length}
-            </div>
-          </div>
-        </div>
-      `
-    })
 
-    htmlContent += `
+      // Fill remaining rows if less than 8 exercises
+      for (let i = resistanceExercises.length; i < 8; i++) {
+        htmlContent += '<tr>'
+        htmlContent += '<td style="border: 1px solid #000; padding: 6px;"></td>'
+        for (let j = 0; j < 10; j++) {
+          htmlContent += '<td style="border: 1px solid #000; padding: 6px;"></td>'
+        }
+        htmlContent += '</tr>'
+      }
+
+      htmlContent += `
+            </tbody>
+          </table>
         </div>
+        ` : ''}
+
+      <!-- Cardio Table -->
+      ${cardioExercises.length > 0 ? `
+      <div style="margin-bottom: 30px;">
+        <h2 style="font-size: 14px; font-weight: bold; margin-bottom: 10px; text-transform: uppercase;">Cardio</h2>
+        <table style="width: 100%; border-collapse: collapse; font-size: 10px; border: 1px solid #000;">
+          <thead>
+            <tr style="background: #f0f0f0; border-bottom: 2px solid #000;">
+              <th style="border: 1px solid #000; padding: 8px; text-align: left; font-weight: bold; width: 200px;">EXERCISE</th>
+              <th style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">DURATION</th>
+              <th style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">SPEED</th>
+              <th style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold;">DISTANCE</th>
+            </tr>
+          </thead>
+          <tbody>
+      `
+
+      // Add cardio exercises (max 2 rows)
+      cardioExercises.slice(0, 2).forEach((exercise) => {
+        htmlContent += '<tr>'
+        htmlContent += `<td style="border: 1px solid #000; padding: 6px; font-weight: bold;">${exercise.name}</td>`
+        
+        // For cardio, we'll use the first set's data if available
+        const firstSet = exercise.sets[0]
+        if (firstSet) {
+          // Duration could be estimated from reps or we can leave blank
+          htmlContent += `<td style="border: 1px solid #000; padding: 6px; text-align: center;">${firstSet.reps} min</td>`
+          htmlContent += '<td style="border: 1px solid #000; padding: 6px; text-align: center;"></td>'
+          htmlContent += '<td style="border: 1px solid #000; padding: 6px; text-align: center;"></td>'
+        } else {
+          htmlContent += '<td style="border: 1px solid #000; padding: 6px; text-align: center;"></td>'
+          htmlContent += '<td style="border: 1px solid #000; padding: 6px; text-align: center;"></td>'
+          htmlContent += '<td style="border: 1px solid #000; padding: 6px; text-align: center;"></td>'
+        }
+        
+        htmlContent += '</tr>'
+      })
+
+      // Fill remaining row if only 1 cardio exercise
+      if (cardioExercises.length < 2) {
+        htmlContent += '<tr>'
+        htmlContent += '<td style="border: 1px solid #000; padding: 6px;"></td>'
+        htmlContent += '<td style="border: 1px solid #000; padding: 6px;"></td>'
+        htmlContent += '<td style="border: 1px solid #000; padding: 6px;"></td>'
+        htmlContent += '<td style="border: 1px solid #000; padding: 6px;"></td>'
+        htmlContent += '</tr>'
+      }
+
+      htmlContent += `
+          </tbody>
+        </table>
+      </div>
+      ` : ''}
+
       </div>
     `
 
-    container.innerHTML = htmlContent
+      container.innerHTML = htmlContent
 
       try {
         // Wait for DOM to render
@@ -259,7 +331,7 @@ export class PDFExporter {
     
     this.doc.setTextColor(0, 0, 0)
     let yPosition = 40
-
+    
     // Workout info
     this.doc.setFontSize(11)
     const dateText = new Date(workout.date).toLocaleDateString('en-US', { 
@@ -293,7 +365,7 @@ export class PDFExporter {
       this.doc.setFontSize(10)
       this.doc.text(`${exercise.muscleGroup}`, 20, yPosition + 7)
       yPosition += 15
-
+      
       // Sets table
       this.doc.setFontSize(9)
       this.doc.setFont('helvetica', 'bold')
@@ -317,7 +389,7 @@ export class PDFExporter {
         if (set.completed) completedSets++
         yPosition += 6
       })
-
+      
       this.doc.setFontSize(8)
       this.doc.text(`Total Volume: ${totalVolume.toFixed(1)} kg`, 25, yPosition)
       this.doc.text(`Completed: ${completedSets}/${exercise.sets.length}`, 120, yPosition)
@@ -416,7 +488,7 @@ export class PDFExporter {
       this.doc.setFontSize(20)
       this.doc.text(item.icon, xPos + 5, yPosition + 5)
       
-      this.doc.setFontSize(16)
+    this.doc.setFontSize(16)
       this.doc.setFont('helvetica', 'bold')
       this.doc.text(item.value.toString(), xPos + 25, yPosition + 5)
       
