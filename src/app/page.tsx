@@ -19,7 +19,8 @@ import {
   Download,
   Plus,
   X,
-  Trash2
+  Trash2,
+  ChevronDown
 } from 'lucide-react'
 import { 
   getExercises, 
@@ -81,6 +82,8 @@ export default function GymApp() {
   const [analyticsPeriod, setAnalyticsPeriod] = useState('week')
   const [workoutHistory, setWorkoutHistory] = useState<any[]>([])
   const [loadingHistory, setLoadingHistory] = useState(false)
+  const [selectedDate, setSelectedDate] = useState<string | null>(null)
+  const [expandedMonths, setExpandedMonths] = useState<Set<string>>(new Set())
   const [programs, setPrograms] = useState<any[]>([])
   const [loadingPrograms, setLoadingPrograms] = useState(false)
   const [selectedProgram, setSelectedProgram] = useState<any>(null)
@@ -757,6 +760,14 @@ export default function GymApp() {
     }
   }, [mounted, currentUser, activeTab])
 
+  // Load workout history when stats tab is active
+  useEffect(() => {
+    if (!mounted) return
+    if (currentUser && activeTab === 'stats' && workoutHistory.length === 0) {
+      loadWorkoutHistory()
+    }
+  }, [mounted, currentUser, activeTab])
+
   const workoutProgress = totalSets > 0 ? (completedSets / totalSets) * 100 : 0
 
   if (loading || !mounted) {
@@ -1394,6 +1405,168 @@ export default function GymApp() {
                       </div>
                     ))}
                   </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Workout History by Month and Day */}
+            {workoutHistory.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Дасгалын түүх (Сар, Өдөр)</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {(() => {
+                    // Group workouts by month and day
+                    const groupedByMonth: { [key: string]: { [key: string]: any[] } } = {}
+                    
+                    workoutHistory.forEach((workout) => {
+                      const date = new Date(workout.date)
+                      const yearMonth = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
+                      const day = String(date.getDate()).padStart(2, '0')
+                      const dateKey = `${yearMonth}-${day}`
+                      
+                      if (!groupedByMonth[yearMonth]) {
+                        groupedByMonth[yearMonth] = {}
+                      }
+                      if (!groupedByMonth[yearMonth][dateKey]) {
+                        groupedByMonth[yearMonth][dateKey] = []
+                      }
+                      groupedByMonth[yearMonth][dateKey].push(workout)
+                    })
+
+                    // Sort months (newest first)
+                    const sortedMonths = Object.keys(groupedByMonth).sort((a, b) => b.localeCompare(a))
+
+                    return (
+                      <div className="space-y-2">
+                        {sortedMonths.map((yearMonth) => {
+                          const monthDate = new Date(yearMonth + '-01')
+                          const monthName = monthDate.toLocaleDateString('mn-MN', { month: 'long', year: 'numeric' })
+                          const isExpanded = expandedMonths.has(yearMonth)
+                          const days = Object.keys(groupedByMonth[yearMonth]).sort((a, b) => b.localeCompare(a))
+
+                          return (
+                            <div key={yearMonth} className="border rounded-lg">
+                              <button
+                                onClick={() => {
+                                  const newExpanded = new Set(expandedMonths)
+                                  if (isExpanded) {
+                                    newExpanded.delete(yearMonth)
+                                  } else {
+                                    newExpanded.add(yearMonth)
+                                  }
+                                  setExpandedMonths(newExpanded)
+                                }}
+                                className="w-full flex items-center justify-between p-3 hover:bg-muted/50 transition-colors"
+                              >
+                                <div className="font-semibold">{monthName}</div>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-sm text-muted-foreground">{days.length} өдөр</span>
+                                  <ChevronDown className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                                </div>
+                              </button>
+                              
+                              {isExpanded && (
+                                <div className="border-t">
+                                  {days.map((dateKey) => {
+                                    const workoutsForDay = groupedByMonth[yearMonth][dateKey]
+                                    const dayDate = new Date(dateKey + 'T00:00:00')
+                                    const dayName = dayDate.toLocaleDateString('mn-MN', { weekday: 'short', day: 'numeric' })
+                                    const isSelected = selectedDate === dateKey
+                                    
+                                    // Calculate day stats
+                                    const daySets = workoutsForDay.flatMap((w: any) => w.sets || [])
+                                    const completedSets = daySets.filter((s: any) => s.completed).length
+                                    const totalVolume = daySets.reduce((acc: number, s: any) => 
+                                      acc + (s.completed ? s.weight * s.reps : 0), 0)
+
+                                    return (
+                                      <div key={dateKey} className="border-b last:border-b-0">
+                                        <button
+                                          onClick={() => {
+                                            setSelectedDate(isSelected ? null : dateKey)
+                                          }}
+                                          className="w-full flex items-center justify-between p-3 hover:bg-muted/30 transition-colors text-left"
+                                        >
+                                          <div className="flex-1">
+                                            <div className="font-medium">{dayName}</div>
+                                            <div className="text-sm text-muted-foreground">
+                                              {workoutsForDay.length} дасгал • {completedSets} сет • {totalVolume.toFixed(0)}кг
+                                            </div>
+                                          </div>
+                                          <ChevronDown className={`w-4 h-4 transition-transform ${isSelected ? 'rotate-180' : ''}`} />
+                                        </button>
+                                        
+                                        {isSelected && (
+                                          <div className="p-3 bg-muted/20 space-y-3">
+                                            {workoutsForDay.map((workout: any) => {
+                                              // Group sets by exercise
+                                              const exerciseGroups = new Map()
+                                              workout.sets?.forEach((set: any) => {
+                                                if (!set.exercise) return
+                                                const exId = set.exercise.id
+                                                if (!exerciseGroups.has(exId)) {
+                                                  exerciseGroups.set(exId, {
+                                                    exercise: set.exercise,
+                                                    sets: []
+                                                  })
+                                                }
+                                                exerciseGroups.get(exId).sets.push(set)
+                                              })
+
+                                              return (
+                                                <div key={workout.id} className="border rounded p-2 bg-background">
+                                                  <div className="text-xs text-muted-foreground mb-2">
+                                                    {new Date(workout.date).toLocaleTimeString('mn-MN', { 
+                                                      hour: '2-digit', 
+                                                      minute: '2-digit' 
+                                                    })}
+                                                  </div>
+                                                  {Array.from(exerciseGroups.values()).map((group, idx) => (
+                                                    <div key={idx} className="mb-2 last:mb-0">
+                                                      <div className="font-medium text-sm">{group.exercise.mnName}</div>
+                                                      <div className="text-xs text-muted-foreground">
+                                                        {group.sets.filter((s: any) => s.completed).length}/{group.sets.length} сет гүйцэтгэсэн
+                                                      </div>
+                                                      <div className="flex gap-2 flex-wrap mt-1">
+                                                        {group.sets.map((set: any, setIdx: number) => (
+                                                          <span 
+                                                            key={setIdx}
+                                                            className={`text-xs px-1.5 py-0.5 rounded ${
+                                                              set.completed 
+                                                                ? 'bg-primary/20 text-primary' 
+                                                                : 'bg-muted text-muted-foreground'
+                                                            }`}
+                                                          >
+                                                            {set.weight}кг × {set.reps}
+                                                            {set.rpe && ` (RPE ${set.rpe})`}
+                                                          </span>
+                                                        ))}
+                                                      </div>
+                                                    </div>
+                                                  ))}
+                                                  {workout.notes && (
+                                                    <div className="text-xs text-muted-foreground mt-2 italic">
+                                                      {workout.notes}
+                                                    </div>
+                                                  )}
+                                                </div>
+                                              )
+                                            })}
+                                          </div>
+                                        )}
+                                      </div>
+                                    )
+                                  })}
+                                </div>
+                              )}
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )
+                  })()}
                 </CardContent>
               </Card>
             )}
