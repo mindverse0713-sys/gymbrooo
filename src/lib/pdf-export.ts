@@ -112,7 +112,7 @@ export class PDFExporter {
           <!-- Exercise Header -->
           <div style="background: #e5e7eb; padding: 12px 15px;">
             <div style="font-size: 14px; font-weight: bold; color: #3b82f6; margin-bottom: 5px;">
-              ${index + 1}. ${exercise.mnName}
+              ${index + 1}. ${exercise.name}
             </div>
             <div style="font-size: 10px; color: #666;">
               💪 ${exercise.muscleGroup} ${exercise.equipment ? `• ⚙️ ${exercise.equipment}` : ''}
