@@ -766,23 +766,11 @@ export default function GymApp() {
                     className="h-10"
                   />
                 </div>
-                <div>
-                  <Label htmlFor="password" className="text-sm">Нууц үг</Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    value={loginPassword}
-                    onChange={(e) => setLoginPassword(e.target.value)}
-                    placeholder="Нууц үг"
-                    required
-                    className="h-10"
-                  />
-                </div>
                 <Button type="submit" className="w-full h-10" disabled={isLoggingIn}>
                   {isLoggingIn ? 'Нэвтэрч байна...' : 'Нэвтрэх'}
                 </Button>
                 <p className="text-xs text-muted-foreground text-center">
-                  Demo: demo@example.com / demo123
+                  Бүртгэлтэй имэйл хаягаараа нэвтрэнэ үү
                 </p>
                 <div className="text-center">
                   <Button 
