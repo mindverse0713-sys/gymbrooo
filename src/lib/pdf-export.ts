@@ -62,168 +62,155 @@ export class PDFExporter {
   async exportWorkout(data: WorkoutExportData): Promise<void> {
     const { workout, exercises } = data
 
-    // Set font
-    this.doc.setFont('helvetica')
-    
-    // Header with background color
-    this.doc.setFillColor(59, 130, 246) // Blue background
-    this.doc.rect(0, 0, 210, 40, 'F')
-    
-    // Title (white text on blue background)
-    this.doc.setTextColor(255, 255, 255)
-    this.doc.setFontSize(24)
-    this.doc.setFont('helvetica', 'bold')
-    this.doc.text('💪 Gym Дэвтэр', 105, 20, { align: 'center' })
-    
-    this.doc.setFontSize(16)
-    this.doc.setFont('helvetica', 'normal')
-    this.doc.text('Дасгалын Тайлан', 105, 32, { align: 'center' })
-    
-    // Reset text color
-    this.doc.setTextColor(0, 0, 0)
-    
-    let yPosition = 50
-    
-    // Workout info box
-    this.doc.setFillColor(243, 244, 246) // Light gray background
-    this.doc.roundedRect(15, yPosition, 180, 35, 3, 3, 'F')
-    
-    this.doc.setFontSize(12)
-    this.doc.setFont('helvetica', 'bold')
-    this.doc.text('📅 Огноо:', 20, yPosition + 8)
-    this.doc.setFont('helvetica', 'normal')
-    const workoutDate = new Date(workout.date)
-    this.doc.text(workoutDate.toLocaleDateString('mn-MN', { 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric',
-      weekday: 'long'
-    }), 55, yPosition + 8)
-    
-    this.doc.setFont('helvetica', 'bold')
-    this.doc.text('✓ Төлөв:', 20, yPosition + 18)
-    this.doc.setFont('helvetica', 'normal')
-    this.doc.text(workout.completed ? '✅ Дууссан' : '⏳ Дуусаагүй', 55, yPosition + 18)
-    
-    if (workout.notes) {
-      this.doc.setFont('helvetica', 'bold')
-      this.doc.text('📝 Тэмдэглэл:', 20, yPosition + 28)
-      this.doc.setFont('helvetica', 'normal')
-      const notesLines = this.doc.splitTextToSize(workout.notes, 120)
-      this.doc.text(notesLines, 75, yPosition + 28)
-      yPosition += notesLines.length * 5
-    }
-    
-    yPosition += 45
+    // Create HTML element for better text rendering
+    const container = document.createElement('div')
+    container.style.width = '210mm'
+    container.style.padding = '0'
+    container.style.backgroundColor = '#ffffff'
+    container.style.fontFamily = 'Arial, sans-serif'
+    container.style.position = 'absolute'
+    container.style.left = '-9999px'
+    document.body.appendChild(container)
 
-    // Exercises section
-    this.doc.setFontSize(18)
-    this.doc.setFont('helvetica', 'bold')
-    this.doc.text('🏋️ Дасгалууд', 20, yPosition)
-    yPosition += 15
+    let htmlContent = `
+      <div style="width: 210mm; background: white; padding: 0; font-family: Arial, sans-serif;">
+        <!-- Header -->
+        <div style="background: #3b82f6; color: white; padding: 20px 15px; text-align: center;">
+          <h1 style="margin: 0; font-size: 24px; font-weight: bold;">💪 Gym Дэвтэр</h1>
+          <p style="margin: 5px 0 0 0; font-size: 16px;">Дасгалын Тайлан</p>
+        </div>
+        
+        <!-- Workout Info -->
+        <div style="background: #f3f4f6; padding: 15px; margin: 10px 15px; border-radius: 8px;">
+          <div style="margin-bottom: 8px;">
+            <strong>📅 Огноо:</strong> ${new Date(workout.date).toLocaleDateString('mn-MN', { 
+              year: 'numeric', 
+              month: 'long', 
+              day: 'numeric',
+              weekday: 'long'
+            })}
+          </div>
+          <div style="margin-bottom: 8px;">
+            <strong>✓ Төлөв:</strong> ${workout.completed ? '✅ Дууссан' : '⏳ Дуусаагүй'}
+          </div>
+          ${workout.notes ? `<div><strong>📝 Тэмдэглэл:</strong> ${workout.notes}</div>` : ''}
+        </div>
+        
+        <!-- Exercises -->
+        <div style="padding: 15px;">
+          <h2 style="font-size: 18px; font-weight: bold; margin-bottom: 15px;">🏋️ Дасгалууд</h2>
+    `
 
     exercises.forEach((exercise, index) => {
-      // Check if we need a new page
-      if (yPosition > 250) {
-        this.doc.addPage()
-        yPosition = 20
-      }
+      const totalVolume = exercise.sets.reduce((sum, set) => sum + (set.reps * set.weight), 0)
+      const completedSets = exercise.sets.filter(set => set.completed).length
       
-      // Exercise header with background
-      this.doc.setFillColor(229, 231, 235) // Light gray
-      this.doc.roundedRect(15, yPosition - 8, 180, 25, 3, 3, 'F')
-      
-      this.doc.setFontSize(14)
-      this.doc.setFont('helvetica', 'bold')
-      this.doc.setTextColor(59, 130, 246) // Blue text
-      this.doc.text(`${index + 1}. ${exercise.mnName}`, 20, yPosition)
-      this.doc.setTextColor(0, 0, 0) // Reset to black
-      
-      this.doc.setFontSize(10)
-      this.doc.setFont('helvetica', 'normal')
-      this.doc.text(`💪 ${exercise.muscleGroup}`, 20, yPosition + 10)
-      if (exercise.equipment) {
-        this.doc.text(`⚙️ ${exercise.equipment}`, 120, yPosition + 10)
-      }
-      
-      yPosition += 20
-      
-      // Sets table header
-      this.doc.setFillColor(249, 250, 251)
-      this.doc.roundedRect(20, yPosition - 5, 170, 8, 2, 2, 'F')
-      
-      this.doc.setFontSize(9)
-      this.doc.setFont('helvetica', 'bold')
-      this.doc.text('Сет', 25, yPosition)
-      this.doc.text('Давталт', 55, yPosition)
-      this.doc.text('Жин (кг)', 95, yPosition)
-      this.doc.text('RPE', 135, yPosition)
-      this.doc.text('Гүйцэтгэсэн', 165, yPosition)
-      
-      yPosition += 10
-      
-      // Sets rows
-      this.doc.setFont('helvetica', 'normal')
-      let totalVolume = 0
-      let completedSets = 0
+      htmlContent += `
+        <div style="margin-bottom: 20px; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden;">
+          <!-- Exercise Header -->
+          <div style="background: #e5e7eb; padding: 12px 15px;">
+            <div style="font-size: 14px; font-weight: bold; color: #3b82f6; margin-bottom: 5px;">
+              ${index + 1}. ${exercise.mnName}
+            </div>
+            <div style="font-size: 10px; color: #666;">
+              💪 ${exercise.muscleGroup} ${exercise.equipment ? `• ⚙️ ${exercise.equipment}` : ''}
+            </div>
+          </div>
+          
+          <!-- Sets Table -->
+          <div style="padding: 15px;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 9px;">
+              <thead>
+                <tr style="background: #f9fafb;">
+                  <th style="padding: 8px; text-align: left; font-weight: bold;">Сет</th>
+                  <th style="padding: 8px; text-align: left; font-weight: bold;">Давталт</th>
+                  <th style="padding: 8px; text-align: left; font-weight: bold;">Жин (кг)</th>
+                  <th style="padding: 8px; text-align: left; font-weight: bold;">RPE</th>
+                  <th style="padding: 8px; text-align: left; font-weight: bold;">Гүйцэтгэсэн</th>
+                </tr>
+              </thead>
+              <tbody>
+      `
       
       exercise.sets.forEach((set, setIndex) => {
-        const volume = set.reps * set.weight
-        totalVolume += volume
-        if (set.completed) completedSets++
-        
-        // Alternate row colors
-        if (setIndex % 2 === 0) {
-          this.doc.setFillColor(255, 255, 255)
-        } else {
-          this.doc.setFillColor(249, 250, 251)
-        }
-        this.doc.roundedRect(20, yPosition - 4, 170, 7, 1, 1, 'F')
-        
-        this.doc.text(`${set.order}`, 25, yPosition)
-        this.doc.text(`${set.reps}`, 55, yPosition)
-        this.doc.text(`${set.weight}`, 95, yPosition)
-        this.doc.text(`${set.rpe || '-'}`, 135, yPosition)
-        this.doc.setFont('helvetica', 'bold')
-        this.doc.text(set.completed ? '✓' : '○', 175, yPosition)
-        this.doc.setFont('helvetica', 'normal')
-        
-        yPosition += 7
+        htmlContent += `
+          <tr style="background: ${setIndex % 2 === 0 ? '#ffffff' : '#f9fafb'};">
+            <td style="padding: 6px;">${set.order}</td>
+            <td style="padding: 6px;">${set.reps}</td>
+            <td style="padding: 6px;">${set.weight}</td>
+            <td style="padding: 6px;">${set.rpe || '-'}</td>
+            <td style="padding: 6px; font-weight: bold;">${set.completed ? '✓' : '○'}</td>
+          </tr>
+        `
       })
       
-      // Exercise summary
-      yPosition += 3
-      this.doc.setFontSize(9)
-      this.doc.setFont('helvetica', 'bold')
-      this.doc.text(`Нийт эзэлхүүн: ${totalVolume.toFixed(1)} кг`, 25, yPosition)
-      this.doc.text(`Гүйцэтгэсэн: ${completedSets}/${exercise.sets.length}`, 135, yPosition)
-      
-      yPosition += 15
+      htmlContent += `
+              </tbody>
+            </table>
+            <div style="margin-top: 10px; font-size: 9px; font-weight: bold;">
+              Нийт эзэлхүүн: ${totalVolume.toFixed(1)} кг • Гүйцэтгэсэн: ${completedSets}/${exercise.sets.length}
+            </div>
+          </div>
+        </div>
+      `
     })
 
-    // Footer
-    const pageCount = this.doc.getNumberOfPages()
-    for (let i = 1; i <= pageCount; i++) {
-      this.doc.setPage(i)
-      this.doc.setFontSize(8)
-      this.doc.setTextColor(128, 128, 128)
-      this.doc.text(
-        `Gym Дэвтэр - Хуудас ${i} / ${pageCount}`,
-        105,
-        285,
-        { align: 'center' }
-      )
-      this.doc.text(
-        new Date().toLocaleDateString('mn-MN'),
-        190,
-        285,
-        { align: 'right' }
-      )
-    }
+    htmlContent += `
+        </div>
+      </div>
+    `
 
-    // Save the PDF
-    const fileName = `gym-workout-${workoutDate.toISOString().split('T')[0]}.pdf`
-    this.doc.save(fileName)
+    container.innerHTML = htmlContent
+
+    try {
+      // Convert HTML to canvas
+      const canvas = await html2canvas(container, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        width: 794, // A4 width in pixels at 96 DPI
+        windowWidth: 794
+      })
+
+      // Create PDF from canvas
+      const imgData = canvas.toDataURL('image/png')
+      const imgWidth = 210 // A4 width in mm
+      const imgHeight = (canvas.height * imgWidth) / canvas.width
+      
+      this.doc = new jsPDF('p', 'mm', 'a4')
+      this.doc.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight)
+
+      // Add footer if needed (for multiple pages)
+      const pageCount = this.doc.getNumberOfPages()
+      for (let i = 1; i <= pageCount; i++) {
+        this.doc.setPage(i)
+        this.doc.setFontSize(8)
+        this.doc.setTextColor(128, 128, 128)
+        this.doc.text(
+          `Gym Дэвтэр - Хуудас ${i} / ${pageCount}`,
+          105,
+          285,
+          { align: 'center' }
+        )
+        this.doc.text(
+          new Date().toLocaleDateString('mn-MN'),
+          190,
+          285,
+          { align: 'right' }
+        )
+      }
+
+      // Clean up
+      document.body.removeChild(container)
+
+      // Save the PDF
+      const fileName = `gym-workout-${new Date(workout.date).toISOString().split('T')[0]}.pdf`
+      this.doc.save(fileName)
+    } catch (error) {
+      document.body.removeChild(container)
+      console.error('Error generating PDF:', error)
+      throw error
+    }
   }
 
   async exportAnalytics(data: AnalyticsExportData): Promise<void> {
