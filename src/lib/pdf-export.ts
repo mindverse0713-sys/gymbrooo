@@ -288,7 +288,7 @@ export class PDFExporter {
       // Exercise header
       this.doc.setFontSize(12)
       this.doc.setFont('helvetica', 'bold')
-      this.doc.text(`${index + 1}. ${exercise.mnName}`, 20, yPosition)
+      this.doc.text(`${index + 1}. ${exercise.name}`, 20, yPosition)
       this.doc.setFont('helvetica', 'normal')
       this.doc.setFontSize(10)
       this.doc.text(`${exercise.muscleGroup}`, 20, yPosition + 7)
