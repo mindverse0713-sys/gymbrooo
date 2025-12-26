@@ -1254,9 +1254,15 @@ export default function GymApp() {
                                 type="number"
                                 placeholder="Жин"
                                 value={set.weight || ''}
-                                onChange={(e) => updateSet(exerciseIndex, set.id, 'weight', parseFloat(e.target.value) || 0)}
+                                onChange={(e) => {
+                                  const value = parseFloat(e.target.value) || 0
+                                  // Round to nearest 5
+                                  const roundedValue = Math.round(value / 5) * 5
+                                  updateSet(exerciseIndex, set.id, 'weight', roundedValue)
+                                }}
+                                step="5"
                                 className="h-12 text-base bg-muted/50 border-border focus:border-primary focus:ring-primary flex-1 text-center"
-                                inputMode="decimal"
+                                inputMode="numeric"
                               />
                               <Button
                                 type="button"
