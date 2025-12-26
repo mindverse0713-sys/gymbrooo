@@ -1240,17 +1240,37 @@ export default function GymApp() {
                             <label className="text-sm font-medium text-muted-foreground">
                               Жин (кг)
                             </label>
-                            <Input
-                              type="number"
-                              placeholder="Жин"
-                              value={set.weight || ''}
-                              onChange={(e) => updateSet(exerciseIndex, set.id, 'weight', parseFloat(e.target.value) || 0)}
-                              className="h-12 text-base bg-muted/50 border-border focus:border-primary focus:ring-primary"
-                              inputMode="decimal"
-                            />
+                            <div className="flex items-center gap-2">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => updateSet(exerciseIndex, set.id, 'weight', Math.max(0, (set.weight || 0) - 5))}
+                                className="h-12 w-12 p-0 border-border hover:bg-primary/10 hover:border-primary"
+                              >
+                                <span className="text-lg font-bold">-5</span>
+                              </Button>
+                              <Input
+                                type="number"
+                                placeholder="Жин"
+                                value={set.weight || ''}
+                                onChange={(e) => updateSet(exerciseIndex, set.id, 'weight', parseFloat(e.target.value) || 0)}
+                                className="h-12 text-base bg-muted/50 border-border focus:border-primary focus:ring-primary flex-1 text-center"
+                                inputMode="decimal"
+                              />
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => updateSet(exerciseIndex, set.id, 'weight', (set.weight || 0) + 5)}
+                                className="h-12 w-12 p-0 border-border hover:bg-primary/10 hover:border-primary"
+                              >
+                                <span className="text-lg font-bold">+5</span>
+                              </Button>
+                            </div>
                             {/* Quick Select Buttons for Weight */}
                             <div className="flex flex-wrap gap-2 mt-2">
-                              {[5, 10, 15, 20, 25, 30].map((weightValue) => (
+                              {[5, 10, 15, 20, 25, 30, 40, 50].map((weightValue) => (
                                 <button
                                   key={weightValue}
                                   type="button"
