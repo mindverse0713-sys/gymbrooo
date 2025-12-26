@@ -1171,89 +1171,114 @@ export default function GymApp() {
 
         <TabsContent value="workout">
           {workoutStarted && currentWorkout.length > 0 && (
-            <div className="space-y-4">
+            <div className="space-y-6">
               {currentWorkout.map((workoutExercise, exerciseIndex) => (
-                <Card key={workoutExercise.exercise.id}>
-                  <CardHeader>
-                    <CardTitle className="text-lg">{workoutExercise.exercise.mnName}</CardTitle>
-                    <p className="text-sm text-muted-foreground">{workoutExercise.exercise.muscleGroup}</p>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      {workoutExercise.sets.map((set, setIndex) => (
-                        <div key={set.id} className="flex flex-col sm:flex-row items-start sm:items-center gap-3 p-3 sm:p-4 border rounded-lg">
-                          <div className="flex items-center gap-3 w-full sm:w-auto">
-                            <Checkbox
-                              checked={set.completed}
-                              onCheckedChange={() => toggleSet(exerciseIndex, set.id)}
-                              className="w-5 h-5 sm:w-4 sm:h-4"
+                <div key={workoutExercise.exercise.id} className="space-y-4">
+                  {/* Exercise Header */}
+                  <div className="mb-6">
+                    <h2 className="text-3xl font-bold text-foreground mb-1">
+                      {workoutExercise.exercise.mnName}
+                    </h2>
+                    <p className="text-lg text-muted-foreground">
+                      {workoutExercise.exercise.muscleGroup}
+                    </p>
+                  </div>
+
+                  {/* Sets */}
+                  <div className="space-y-4">
+                    {workoutExercise.sets.map((set, setIndex) => (
+                      <div 
+                        key={set.id} 
+                        className="glass-card rounded-xl p-5 space-y-4 border border-border/50"
+                      >
+                        {/* Set Header */}
+                        <div className="flex items-center gap-3">
+                          <Checkbox
+                            checked={set.completed}
+                            onCheckedChange={() => toggleSet(exerciseIndex, set.id)}
+                            className="w-6 h-6 border-2 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                          />
+                          <span className="text-lg font-semibold">Сет {setIndex + 1}</span>
+                        </div>
+
+                        {/* Input Fields */}
+                        <div className="grid grid-cols-2 gap-4">
+                          {/* Reps Input */}
+                          <div className="space-y-2">
+                            <label className="text-sm font-medium text-muted-foreground">
+                              Давталт
+                            </label>
+                            <Input
+                              type="number"
+                              placeholder="Давталт"
+                              value={set.reps || ''}
+                              onChange={(e) => updateSet(exerciseIndex, set.id, 'reps', parseInt(e.target.value) || 0)}
+                              className="h-12 text-base bg-muted/50 border-border focus:border-primary focus:ring-primary"
+                              inputMode="numeric"
                             />
-                            <span className="text-sm font-medium min-w-[50px]">Сет {setIndex + 1}</span>
                           </div>
-                          <div className="grid grid-cols-2 sm:flex gap-2 w-full sm:w-auto">
-                            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-1">
-                              <label className="text-xs text-muted-foreground sm:hidden">Давталт</label>
-                              <Input
-                                type="number"
-                                placeholder="Давталт"
-                                value={set.reps || ''}
-                                onChange={(e) => updateSet(exerciseIndex, set.id, 'reps', parseInt(e.target.value) || 0)}
-                                className="w-full sm:w-20 h-10 sm:h-9 text-base sm:text-sm"
-                                inputMode="numeric"
-                              />
-                            </div>
-                            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-1">
-                              <label className="text-xs text-muted-foreground sm:hidden">Жин (кг)</label>
-                              <div className="flex items-center gap-1 w-full sm:w-auto">
-                                <Input
-                                  type="number"
-                                  placeholder="Жин"
-                                  value={set.weight || ''}
-                                  onChange={(e) => updateSet(exerciseIndex, set.id, 'weight', parseFloat(e.target.value) || 0)}
-                                  className="w-full sm:w-20 h-10 sm:h-9 text-base sm:text-sm"
-                                  inputMode="decimal"
-                                />
-                                <span className="text-sm sm:block hidden">кг</span>
-                              </div>
-                            </div>
-                            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-1">
-                              <label className="text-xs text-muted-foreground sm:hidden">RPE</label>
-                              <Input
-                                type="number"
-                                placeholder="RPE"
-                                value={set.rpe || ''}
-                                onChange={(e) => updateSet(exerciseIndex, set.id, 'rpe', parseInt(e.target.value) || 0)}
-                                className="w-full sm:w-16 h-10 sm:h-9 text-base sm:text-sm"
-                                min="1"
-                                max="10"
-                                inputMode="numeric"
-                              />
-                            </div>
+
+                          {/* Weight Input */}
+                          <div className="space-y-2">
+                            <label className="text-sm font-medium text-muted-foreground">
+                              Жин (кг)
+                            </label>
+                            <Input
+                              type="number"
+                              placeholder="Жин"
+                              value={set.weight || ''}
+                              onChange={(e) => updateSet(exerciseIndex, set.id, 'weight', parseFloat(e.target.value) || 0)}
+                              className="h-12 text-base bg-muted/50 border-border focus:border-primary focus:ring-primary"
+                              inputMode="decimal"
+                            />
                           </div>
+
+                          {/* RPE Input */}
+                          <div className="space-y-2 col-span-2">
+                            <label className="text-sm font-medium text-muted-foreground">
+                              RPE
+                            </label>
+                            <Input
+                              type="number"
+                              placeholder="RPE"
+                              value={set.rpe || ''}
+                              onChange={(e) => updateSet(exerciseIndex, set.id, 'rpe', parseInt(e.target.value) || 0)}
+                              className="h-12 text-base bg-muted/50 border-border focus:border-primary focus:ring-primary"
+                              min="1"
+                              max="10"
+                              inputMode="numeric"
+                            />
+                          </div>
+                        </div>
+
+                        {/* Delete Button */}
+                        <div className="pt-2 border-t border-border/50">
                           <Button
                             variant="ghost"
                             size="sm"
                             onClick={() => removeSet(exerciseIndex, set.id)}
                             disabled={workoutExercise.sets.length <= 1}
-                            className="w-full sm:w-10 h-10 sm:h-9 p-0 text-destructive hover:text-destructive"
+                            className="w-full text-destructive hover:text-destructive hover:bg-destructive/10 h-10"
                           >
-                            <X className="w-4 h-4" />
-                            <span className="ml-2 sm:hidden">Устгах</span>
+                            <X className="w-4 h-4 mr-2" />
+                            Устгах
                           </Button>
                         </div>
-                      ))}
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => addSet(exerciseIndex)}
-                        className="w-full"
-                      >
-                        <Plus className="w-4 h-4 mr-2" />
-                        Сет нэмэх
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
+                      </div>
+                    ))}
+
+                    {/* Add Set Button */}
+                    <Button
+                      variant="outline"
+                      size="lg"
+                      onClick={() => addSet(exerciseIndex)}
+                      className="w-full h-12 text-base border-primary/30 hover:bg-primary/10 hover:border-primary"
+                    >
+                      <Plus className="w-5 h-5 mr-2" />
+                      Сет нэмэх
+                    </Button>
+                  </div>
+                </div>
               ))}
             </div>
           )}
