@@ -1216,6 +1216,23 @@ export default function GymApp() {
                               className="h-12 text-base bg-muted/50 border-border focus:border-primary focus:ring-primary"
                               inputMode="numeric"
                             />
+                            {/* Quick Select Buttons for Reps */}
+                            <div className="flex flex-wrap gap-2 mt-2">
+                              {[5, 8, 10, 12, 15, 20].map((repValue) => (
+                                <button
+                                  key={repValue}
+                                  type="button"
+                                  onClick={() => updateSet(exerciseIndex, set.id, 'reps', repValue)}
+                                  className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
+                                    set.reps === repValue
+                                      ? 'bg-primary text-primary-foreground'
+                                      : 'bg-muted hover:bg-muted/80 text-muted-foreground'
+                                  }`}
+                                >
+                                  {repValue}
+                                </button>
+                              ))}
+                            </div>
                           </div>
 
                           {/* Weight Input */}
@@ -1231,6 +1248,23 @@ export default function GymApp() {
                               className="h-12 text-base bg-muted/50 border-border focus:border-primary focus:ring-primary"
                               inputMode="decimal"
                             />
+                            {/* Quick Select Buttons for Weight */}
+                            <div className="flex flex-wrap gap-2 mt-2">
+                              {[5, 10, 15, 20, 25, 30].map((weightValue) => (
+                                <button
+                                  key={weightValue}
+                                  type="button"
+                                  onClick={() => updateSet(exerciseIndex, set.id, 'weight', weightValue)}
+                                  className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
+                                    set.weight === weightValue
+                                      ? 'bg-primary text-primary-foreground'
+                                      : 'bg-muted hover:bg-muted/80 text-muted-foreground'
+                                  }`}
+                                >
+                                  {weightValue}кг
+                                </button>
+                              ))}
+                            </div>
                           </div>
 
                           {/* RPE Input */}
@@ -1248,6 +1282,23 @@ export default function GymApp() {
                               max="10"
                               inputMode="numeric"
                             />
+                            {/* Quick Select Buttons for RPE */}
+                            <div className="flex flex-wrap gap-2 mt-2">
+                              {[6, 7, 8, 9, 10].map((rpeValue) => (
+                                <button
+                                  key={rpeValue}
+                                  type="button"
+                                  onClick={() => updateSet(exerciseIndex, set.id, 'rpe', rpeValue)}
+                                  className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
+                                    set.rpe === rpeValue
+                                      ? 'bg-primary text-primary-foreground'
+                                      : 'bg-muted hover:bg-muted/80 text-muted-foreground'
+                                  }`}
+                                >
+                                  {rpeValue}
+                                </button>
+                              ))}
+                            </div>
                           </div>
                         </div>
 
