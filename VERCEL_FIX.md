@@ -57,3 +57,4 @@ git push
 - Vercel дээр environment variables байхгүй бол → алдаа гарна
 - Environment variables нэмсний дараа redeploy хийх хэрэгтэй
 
+

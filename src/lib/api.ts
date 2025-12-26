@@ -21,6 +21,7 @@ export interface User {
   height?: number
   weight?: number
   experienceLevel?: string
+  profileImage?: string
   createdAt?: string
   updatedAt?: string
 }
@@ -186,7 +187,9 @@ export async function updateUser(user: Partial<User>): Promise<User> {
     body: JSON.stringify(user),
   })
   if (!response.ok) {
-    throw new Error('Failed to update user')
+    const error = await response.json().catch(() => ({ error: 'Failed to update user' }))
+    const errorMessage = error.error || error.details || 'Failed to update user'
+    throw new Error(errorMessage)
   }
   return response.json()
 }

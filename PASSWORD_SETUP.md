@@ -32,3 +32,4 @@ ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "password" TEXT;
 
 Хуучин хэрэглэгчид (password байхгүй) одоогоор нэвтрэх боломжтой (migration-ын тулд). Ирээдүйд password reset хийх шаардлагатай болно.
 
+

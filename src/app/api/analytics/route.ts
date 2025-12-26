@@ -112,8 +112,8 @@ export async function GET(request: NextRequest) {
     const exerciseStats = new Map()
     
     allSets.forEach(set => {
-      if (set.completed && set.exercise) {
-        const exerciseId = set.exercise.id
+        if (set.completed && set.exercise) {
+          const exerciseId = set.exercise.id
         const exercise = set.exercise
         
         // Calculate PRs

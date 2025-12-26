@@ -47,3 +47,4 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzd
 - Supabase dashboard → Database → Tables дээр table-ууд үүссэн эсэхийг шалгана уу
 - `.env.local` файл зөв байгаа эсэхийг шалгана уу
 
+

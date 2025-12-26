@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { email, password, name, age, gender, height, weight, experienceLevel } = body
+    const { email, password, name, age, gender, height, weight, experienceLevel, profileImage } = body
 
     if (!email) {
       return NextResponse.json(
@@ -98,14 +98,15 @@ export async function POST(request: NextRequest) {
 
     const newUser = {
       id: uuidv4(),
-      email,
+        email,
       password: hashedPassword,
-      name: name || null,
-      age: age || null,
-      gender: gender || null,
-      height: height || null,
-      weight: weight || null,
+        name: name || null,
+        age: age || null,
+        gender: gender || null,
+        height: height || null,
+        weight: weight || null,
       experienceLevel: experienceLevel || null,
+      profileImage: profileImage || null,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     }
@@ -171,7 +172,7 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const body = await request.json()
-    const { email, name, age, gender, height, weight, experienceLevel } = body
+    const { email, name, age, gender, height, weight, experienceLevel, profileImage } = body
 
     if (!email) {
       return NextResponse.json(
@@ -190,6 +191,7 @@ export async function PUT(request: NextRequest) {
     if (height !== undefined) updateData.height = height
     if (weight !== undefined) updateData.weight = weight
     if (experienceLevel !== undefined) updateData.experienceLevel = experienceLevel
+    if (profileImage !== undefined) updateData.profileImage = profileImage
 
     const { data: user, error } = await getSupabase()
       .from('User')
@@ -198,10 +200,29 @@ export async function PUT(request: NextRequest) {
       .select()
       .single()
 
-    if (error || !user) {
+    if (error) {
+      console.error('Supabase update error:', error)
+      // Check if it's a column not found error
+      if (error.message?.includes('column') && error.message?.includes('does not exist')) {
+        return NextResponse.json(
+          { 
+            error: 'Database column missing. Please run the SQL migration to add profileImage column.',
+            details: error.message,
+            hint: 'Run: ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "profileImage" TEXT;'
+          },
+          { status: 500 }
+        )
+      }
       return NextResponse.json(
-        { error: 'Failed to update user' },
+        { error: 'Failed to update user', details: error.message },
         { status: 500 }
+      )
+    }
+
+    if (!user) {
+      return NextResponse.json(
+        { error: 'User not found' },
+        { status: 404 }
       )
     }
 

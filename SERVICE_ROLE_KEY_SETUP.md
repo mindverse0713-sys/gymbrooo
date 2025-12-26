@@ -34,3 +34,4 @@ Service Role Key-ийг ашигласнаар:
 - Client-side код руу хэзээ ч илгээхгүй
 - Зөвхөн server-side (API routes) дээр ашиглана
 
+

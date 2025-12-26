@@ -13,6 +13,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { 
   Dumbbell, 
   TrendingUp, 
+  Calendar,
   User, 
   Play, 
   Clock,
@@ -20,7 +21,8 @@ import {
   Plus,
   X,
   Trash2,
-  ChevronDown
+  ChevronDown,
+  LogOut
 } from 'lucide-react'
 import { 
   getExercises, 
@@ -83,7 +85,7 @@ export default function GymApp() {
   const [workoutHistory, setWorkoutHistory] = useState<any[]>([])
   const [loadingHistory, setLoadingHistory] = useState(false)
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
-  const [expandedMonths, setExpandedMonths] = useState<Set<string>>(new Set())
+  const [expandedMonths, setExpandedMonths] = useState<Set<string>>(new Set<string>())
   const [programs, setPrograms] = useState<any[]>([])
   const [loadingPrograms, setLoadingPrograms] = useState(false)
   const [selectedProgram, setSelectedProgram] = useState<any>(null)
@@ -332,6 +334,39 @@ export default function GymApp() {
       setCurrentUser(updatedUser)
     } catch (error) {
       console.error('Error updating user profile:', error)
+    }
+  }
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    // Check if file is an image
+    if (!file.type.startsWith('image/')) {
+      alert('Зөвхөн зураг оруулна уу')
+      return
+    }
+
+    // Check file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Зургийн хэмжээ 5MB-аас их байна')
+      return
+    }
+
+    try {
+      // Convert to base64
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        const base64String = reader.result as string
+        saveUserProfile({ profileImage: base64String })
+      }
+      reader.onerror = () => {
+        alert('Зураг уншихад алдаа гарлаа')
+      }
+      reader.readAsDataURL(file)
+    } catch (error) {
+      console.error('Error uploading image:', error)
+      alert('Зураг оруулахад алдаа гарлаа')
     }
   }
 
@@ -785,6 +820,16 @@ export default function GymApp() {
     <div className="min-h-screen bg-background text-foreground p-3 sm:p-4 max-w-md mx-auto pb-20 sm:pb-4">
       {showLogin && (
         <Card className="mb-4 sm:mb-6">
+          {/* Login Header Image */}
+          <div className="w-full h-48 sm:h-56 overflow-hidden rounded-t-lg relative">
+            <img 
+              src="/images/login-header.png" 
+              alt="Gym Login"
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-background/80" />
+          </div>
+          
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
               <User className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -892,36 +937,56 @@ export default function GymApp() {
 
       {!showLogin && (
         <>
-          <div className="mb-6">
-            <h1 className="text-xl md:text-2xl font-bold flex items-center gap-2">
-              <Dumbbell className="w-6 h-6 md:w-8 md:h-8 text-primary" />
-              <span className="hidden sm:inline">Gym Дэвтэр</span>
-              <span className="sm:inline md:hidden">Gym</span>
-            </h1>
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mt-2 gap-2 sm:gap-0">
-              <p className="text-sm text-muted-foreground">
-                Тавтай морил, {currentUser?.name}
-              </p>
-              <Button variant="outline" size="sm" onClick={handleLogout}>
-                Гарах
-              </Button>
+          {/* Header */}
+          <div className="mb-6 glass-card rounded-lg border border-border/50 backdrop-blur-lg">
+            <div className="flex items-center justify-between px-4 py-3">
+              {/* Left side - Logo and Text */}
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center">
+                  <Dumbbell className="w-5 h-5 text-primary" />
+                </div>
+                <span className="font-semibold text-lg text-foreground">Gym</span>
+              </div>
+              
+              {/* Right side - Profile Picture */}
+              <div className="relative">
+                <button
+                  onClick={() => setActiveTab('profile')}
+                  className="relative w-10 h-10 rounded-full overflow-hidden border border-border bg-muted/50 hover:border-primary/50 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background"
+                >
+                  {currentUser?.profileImage ? (
+                    <img
+                      src={currentUser.profileImage}
+                      alt={currentUser?.name || 'Profile'}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement
+                        target.style.display = 'none'
+                      }}
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <User className="w-5 h-5 text-muted-foreground" />
+                    </div>
+                  )}
+                </button>
+              </div>
             </div>
           </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         {/* Desktop Tabs */}
-        <TabsList className="hidden sm:grid sm:grid-cols-6 mb-6">
+        <TabsList className="hidden sm:grid sm:grid-cols-5 mb-6">
           <TabsTrigger value="home" className="text-xs">Нүүр</TabsTrigger>
           <TabsTrigger value="exercises" className="text-xs">Дасгал</TabsTrigger>
           <TabsTrigger value="program" className="text-xs">Хөтөлбөр</TabsTrigger>
           <TabsTrigger value="workout" className="text-xs">Дасгал</TabsTrigger>
           <TabsTrigger value="stats" className="text-xs">Статистик</TabsTrigger>
-          <TabsTrigger value="profile" className="text-xs">Профайл</TabsTrigger>
         </TabsList>
         
         {/* Mobile Bottom Navigation */}
         <div className="fixed bottom-0 left-0 right-0 sm:hidden bg-card/95 backdrop-blur-lg border-t border-border z-50">
-          <div className="grid grid-cols-5 w-full max-w-md mx-auto relative">
+          <div className="grid grid-cols-4 w-full max-w-md mx-auto relative">
             <button
               onClick={() => setActiveTab('home')}
               className={`flex flex-col items-center justify-center py-2 px-1 transition-colors ${
@@ -960,7 +1025,7 @@ export default function GymApp() {
                 activeTab === 'program' ? 'text-primary' : 'text-muted-foreground'
               }`}
             >
-              <TrendingUp className="w-5 h-5 mb-1" />
+              <Calendar className="w-5 h-5 mb-1" />
               <span className="text-xs">Хөтөлбөр</span>
             </button>
             <button
@@ -971,15 +1036,6 @@ export default function GymApp() {
             >
               <TrendingUp className="w-5 h-5 mb-1" />
               <span className="text-xs">Стат</span>
-            </button>
-            <button
-              onClick={() => setActiveTab('profile')}
-              className={`flex flex-col items-center justify-center py-2 px-1 transition-colors ${
-                activeTab === 'profile' ? 'text-primary' : 'text-muted-foreground'
-              }`}
-            >
-              <User className="w-5 h-5 mb-1" />
-              <span className="text-xs">Профайл</span>
             </button>
           </div>
         </div>
@@ -1060,9 +1116,93 @@ export default function GymApp() {
                           }}
                         >
                           <div className="text-center">
-                            <div className="icon-circle mx-auto mb-2">
-                              <Dumbbell className={`w-5 h-5 ${isSelected ? 'text-primary' : 'text-muted-foreground'}`} />
-                            </div>
+                            {/* Exercise image/icon */}
+                            {exercise.name.toLowerCase().includes('bench press') || exercise.mnName.toLowerCase().includes('bench press') ? (
+                              <div className="w-16 h-16 rounded-lg overflow-hidden border border-border/50 bg-muted/30 relative mx-auto mb-2">
+                                <img 
+                                  src="/images/bench-press.png" 
+                                  alt={exercise.mnName}
+                                  className="w-full h-full object-cover"
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent pointer-events-none" />
+                              </div>
+                            ) : exercise.muscleGroup === 'Chest' ? (
+                              <div className="w-16 h-16 rounded-lg overflow-hidden border border-border/50 bg-muted/30 relative mx-auto mb-2">
+                                <img 
+                                  src="/images/chest-exercise.png" 
+                                  alt={exercise.mnName}
+                                  className="w-full h-full object-cover"
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent pointer-events-none" />
+                              </div>
+                            ) : exercise.muscleGroup === 'Shoulders' ? (
+                              <div className="w-16 h-16 rounded-lg overflow-hidden border border-border/50 bg-muted/30 relative mx-auto mb-2">
+                                <img 
+                                  src="/images/shoulder-press.png" 
+                                  alt={exercise.mnName}
+                                  className="w-full h-full object-cover"
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent pointer-events-none" />
+                              </div>
+                            ) : exercise.muscleGroup === 'Legs' ? (
+                              <div className="w-16 h-16 rounded-lg overflow-hidden border border-border/50 bg-muted/30 relative mx-auto mb-2">
+                                <img 
+                                  src="/images/leg-squat.png" 
+                                  alt={exercise.mnName}
+                                  className="w-full h-full object-cover"
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent pointer-events-none" />
+                              </div>
+                            ) : exercise.muscleGroup === 'Arms' ? (
+                              <div className="w-16 h-16 rounded-lg overflow-hidden border border-border/50 bg-muted/30 relative mx-auto mb-2">
+                                <img 
+                                  src="/images/arm-curl.png" 
+                                  alt={exercise.mnName}
+                                  className="w-full h-full object-cover"
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent pointer-events-none" />
+                              </div>
+                            ) : exercise.muscleGroup === 'Back' ? (
+                              <div className="w-16 h-16 rounded-lg overflow-hidden border border-border/50 bg-muted/30 relative mx-auto mb-2">
+                                <img 
+                                  src="/images/back-exercise.png" 
+                                  alt={exercise.mnName}
+                                  className="w-full h-full object-cover"
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent pointer-events-none" />
+                              </div>
+                            ) : exercise.muscleGroup === 'Cardio' ? (
+                              <div className="w-16 h-16 rounded-lg overflow-hidden border border-border/50 bg-muted/30 relative mx-auto mb-2">
+                                <img 
+                                  src="/images/cardio-exercise.png" 
+                                  alt={exercise.mnName}
+                                  className="w-full h-full object-cover"
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent pointer-events-none" />
+                              </div>
+                            ) : exercise.muscleGroup === 'Core' ? (
+                              <div className="w-16 h-16 rounded-lg overflow-hidden border border-border/50 bg-muted/30 relative mx-auto mb-2">
+                                <img 
+                                  src="/images/core-exercise.png" 
+                                  alt={exercise.mnName}
+                                  className="w-full h-full object-cover"
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent pointer-events-none" />
+                              </div>
+                            ) : exercise.muscleGroup === 'Full Body' ? (
+                              <div className="w-16 h-16 rounded-lg overflow-hidden border border-border/50 bg-muted/30 relative mx-auto mb-2">
+                                <img 
+                                  src="/images/full-body-exercise.png" 
+                                  alt={exercise.mnName}
+                                  className="w-full h-full object-cover"
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent pointer-events-none" />
+                              </div>
+                            ) : (
+                              <div className="icon-circle mx-auto mb-2">
+                                <Dumbbell className={`w-5 h-5 ${isSelected ? 'text-primary' : 'text-muted-foreground'}`} />
+                              </div>
+                            )}
                             <div className="text-xs font-medium text-primary mb-1">{exercise.muscleGroup}</div>
                             <div className="text-sm font-semibold">{exercise.mnName}</div>
                           </div>
@@ -1250,7 +1390,82 @@ export default function GymApp() {
                               >
                                 <span className="text-lg font-bold">-5</span>
                               </Button>
-                              <div className="h-12 flex-1 flex items-center justify-center bg-muted/50 border border-border rounded-lg">
+                              <div
+                                className="h-12 flex-1 flex items-center justify-center bg-muted/50 border border-border rounded-lg cursor-pointer select-none touch-none"
+                                onTouchStart={(e) => {
+                                  const touch = e.touches[0]
+                                  const startX = touch.clientX
+                                  const startWeight = set.weight || 0
+                                  e.currentTarget.setAttribute('data-touch-start-x', startX.toString())
+                                  e.currentTarget.setAttribute('data-touch-start-weight', startWeight.toString())
+                                  e.currentTarget.setAttribute('data-touch-last-updated', '0')
+                                }}
+                                onTouchMove={(e) => {
+                                  e.preventDefault()
+                                  const startX = parseFloat(e.currentTarget.getAttribute('data-touch-start-x') || '0')
+                                  const startWeight = parseFloat(e.currentTarget.getAttribute('data-touch-start-weight') || '0')
+                                  const lastUpdated = parseFloat(e.currentTarget.getAttribute('data-touch-last-updated') || '0')
+                                  const touch = e.touches[0]
+                                  const currentX = touch.clientX
+                                  const totalDiff = currentX - startX
+                                  const threshold = 30 // Update every 30px
+                                  const steps = Math.floor(Math.abs(totalDiff) / threshold)
+                                  
+                                  if (steps !== lastUpdated && steps > 0) {
+                                    const direction = totalDiff > 0 ? 1 : -1
+                                    const newWeight = Math.max(0, startWeight + (direction * steps * 5))
+                                    
+                                    updateSet(exerciseIndex, set.id, 'weight', newWeight)
+                                    e.currentTarget.setAttribute('data-touch-last-updated', steps.toString())
+                                  }
+                                }}
+                                onTouchEnd={(e) => {
+                                  e.currentTarget.removeAttribute('data-touch-start-x')
+                                  e.currentTarget.removeAttribute('data-touch-start-weight')
+                                  e.currentTarget.removeAttribute('data-touch-last-updated')
+                                }}
+                                onMouseDown={(e) => {
+                                  const startX = e.clientX
+                                  const startWeight = set.weight || 0
+                                  e.currentTarget.setAttribute('data-mouse-start-x', startX.toString())
+                                  e.currentTarget.setAttribute('data-mouse-start-weight', startWeight.toString())
+                                  e.currentTarget.setAttribute('data-mouse-last-updated', '0')
+                                  e.currentTarget.setAttribute('data-is-dragging', 'true')
+                                  e.preventDefault()
+                                }}
+                                onMouseMove={(e) => {
+                                  if (e.currentTarget.getAttribute('data-is-dragging') === 'true') {
+                                    e.preventDefault()
+                                    const startX = parseFloat(e.currentTarget.getAttribute('data-mouse-start-x') || '0')
+                                    const startWeight = parseFloat(e.currentTarget.getAttribute('data-mouse-start-weight') || '0')
+                                    const lastUpdated = parseFloat(e.currentTarget.getAttribute('data-mouse-last-updated') || '0')
+                                    const currentX = e.clientX
+                                    const totalDiff = currentX - startX
+                                    const threshold = 30
+                                    const steps = Math.floor(Math.abs(totalDiff) / threshold)
+                                    
+                                    if (steps !== lastUpdated && steps > 0) {
+                                      const direction = totalDiff > 0 ? 1 : -1
+                                      const newWeight = Math.max(0, startWeight + (direction * steps * 5))
+                                      
+                                      updateSet(exerciseIndex, set.id, 'weight', newWeight)
+                                      e.currentTarget.setAttribute('data-mouse-last-updated', steps.toString())
+                                    }
+                                  }
+                                }}
+                                onMouseUp={(e) => {
+                                  e.currentTarget.removeAttribute('data-mouse-start-x')
+                                  e.currentTarget.removeAttribute('data-mouse-start-weight')
+                                  e.currentTarget.removeAttribute('data-mouse-last-updated')
+                                  e.currentTarget.removeAttribute('data-is-dragging')
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.currentTarget.removeAttribute('data-mouse-start-x')
+                                  e.currentTarget.removeAttribute('data-mouse-start-weight')
+                                  e.currentTarget.removeAttribute('data-mouse-last-updated')
+                                  e.currentTarget.removeAttribute('data-is-dragging')
+                                }}
+                              >
                                 <span className="text-lg font-medium">{set.weight || 0}</span>
                               </div>
                               <Button
@@ -1390,10 +1605,93 @@ export default function GymApp() {
                     } hover:border-primary/50`}
                   >
                     <div className="flex items-center gap-4">
-                      {/* Circular icon */}
-                      <div className="icon-circle flex-shrink-0">
-                        <Dumbbell className={`w-6 h-6 ${isSelected ? 'text-primary' : 'text-muted-foreground'}`} />
-                      </div>
+                      {/* Exercise image/icon */}
+                      {exercise.name.toLowerCase().includes('bench press') || exercise.mnName.toLowerCase().includes('bench press') ? (
+                        <div className="flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border border-border/50 bg-muted/30 relative">
+                          <img 
+                            src="/images/bench-press.png" 
+                            alt={exercise.mnName}
+                            className="w-full h-full object-cover"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent pointer-events-none" />
+                        </div>
+                      ) : exercise.muscleGroup === 'Chest' ? (
+                        <div className="flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border border-border/50 bg-muted/30 relative">
+                          <img 
+                            src="/images/chest-exercise.png" 
+                            alt={exercise.mnName}
+                            className="w-full h-full object-cover"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent pointer-events-none" />
+                        </div>
+                      ) : exercise.muscleGroup === 'Shoulders' ? (
+                        <div className="flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border border-border/50 bg-muted/30 relative">
+                          <img 
+                            src="/images/shoulder-press.png" 
+                            alt={exercise.mnName}
+                            className="w-full h-full object-cover"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent pointer-events-none" />
+                        </div>
+                      ) : exercise.muscleGroup === 'Legs' ? (
+                        <div className="flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border border-border/50 bg-muted/30 relative">
+                          <img 
+                            src="/images/leg-squat.png" 
+                            alt={exercise.mnName}
+                            className="w-full h-full object-cover"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent pointer-events-none" />
+                        </div>
+                      ) : exercise.muscleGroup === 'Arms' ? (
+                        <div className="flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border border-border/50 bg-muted/30 relative">
+                          <img 
+                            src="/images/arm-curl.png" 
+                            alt={exercise.mnName}
+                            className="w-full h-full object-cover"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent pointer-events-none" />
+                        </div>
+                      ) : exercise.muscleGroup === 'Back' ? (
+                        <div className="flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border border-border/50 bg-muted/30 relative">
+                          <img 
+                            src="/images/back-exercise.png" 
+                            alt={exercise.mnName}
+                            className="w-full h-full object-cover"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent pointer-events-none" />
+                        </div>
+                      ) : exercise.muscleGroup === 'Cardio' ? (
+                        <div className="flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border border-border/50 bg-muted/30 relative">
+                          <img 
+                            src="/images/cardio-exercise.png" 
+                            alt={exercise.mnName}
+                            className="w-full h-full object-cover"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent pointer-events-none" />
+                        </div>
+                      ) : exercise.muscleGroup === 'Core' ? (
+                        <div className="flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border border-border/50 bg-muted/30 relative">
+                          <img 
+                            src="/images/core-exercise.png" 
+                            alt={exercise.mnName}
+                            className="w-full h-full object-cover"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent pointer-events-none" />
+                        </div>
+                      ) : exercise.muscleGroup === 'Full Body' ? (
+                        <div className="flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border border-border/50 bg-muted/30 relative">
+                          <img 
+                            src="/images/full-body-exercise.png" 
+                            alt={exercise.mnName}
+                            className="w-full h-full object-cover"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent pointer-events-none" />
+                        </div>
+                      ) : (
+                        <div className="icon-circle flex-shrink-0">
+                          <Dumbbell className={`w-6 h-6 ${isSelected ? 'text-primary' : 'text-muted-foreground'}`} />
+                        </div>
+                      )}
                       
                       {/* Exercise info */}
                       <div className="flex-1 min-w-0">
@@ -1463,22 +1761,89 @@ export default function GymApp() {
               </CardHeader>
               <CardContent>
                 {analytics ? (
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-primary">{analytics.summary.totalWorkouts}</div>
-                      <p className="text-sm text-muted-foreground">Нийт дасгал</p>
+                  <div className="space-y-6">
+                    {/* Main Stats Grid */}
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                      <div className="glass-card p-4 rounded-lg border border-border/50 text-center">
+                        <div className="text-3xl font-bold text-primary mb-1">{analytics.summary.totalWorkouts}</div>
+                        <p className="text-sm text-muted-foreground">Нийт дасгал</p>
+                        {analytics.summary.totalWorkouts > 0 && (
+                          <p className="text-xs text-muted-foreground/70 mt-1">
+                            {analyticsPeriod === 'week' 
+                              ? `${analytics.summary.totalWorkouts} дасгал/долоо хоног`
+                              : analyticsPeriod === 'month'
+                              ? `${(analytics.summary.totalWorkouts / 4).toFixed(1)} дасгал/долоо хоног`
+                              : `${(analytics.summary.totalWorkouts / 52).toFixed(1)} дасгал/долоо хоног`
+                            }
+                          </p>
+                        )}
+                      </div>
+                      <div className="glass-card p-4 rounded-lg border border-border/50 text-center">
+                        <div className="text-3xl font-bold text-primary mb-1">{analytics.summary.totalSets}</div>
+                        <p className="text-sm text-muted-foreground">Нийт сет</p>
+                        {analytics.summary.totalSets > 0 && (
+                          <p className="text-xs text-muted-foreground/70 mt-1">
+                            {analytics.summary.completedSets} гүйцэтгэсэн
+                          </p>
+                        )}
+                      </div>
+                      <div className="glass-card p-4 rounded-lg border border-border/50 text-center">
+                        <div className="text-3xl font-bold text-primary mb-1">{analytics.summary.totalVolume.toFixed(0)}</div>
+                        <p className="text-sm text-muted-foreground">Нийт жин (кг)</p>
+                        {analytics.summary.totalWorkouts > 0 && (
+                          <p className="text-xs text-muted-foreground/70 mt-1">
+                            Дундаж: {(analytics.summary.totalVolume / analytics.summary.totalWorkouts).toFixed(0)}кг/дасгал
+                          </p>
+                        )}
+                      </div>
+                      <div className="glass-card p-4 rounded-lg border border-border/50 text-center">
+                        <div className="text-3xl font-bold text-primary mb-1">{analytics.summary.completionRate.toFixed(1)}%</div>
+                        <p className="text-sm text-muted-foreground">Гүйцэтгэл</p>
+                        {analytics.summary.totalSets > 0 && (
+                          <p className="text-xs text-muted-foreground/70 mt-1">
+                            {analytics.summary.completedSets}/{analytics.summary.totalSets} сет
+                          </p>
+                        )}
+                      </div>
                     </div>
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-primary">{analytics.summary.totalSets}</div>
-                      <p className="text-sm text-muted-foreground">Сэт</p>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-primary">{analytics.summary.totalVolume}кг</div>
-                      <p className="text-sm text-muted-foreground">Нийт жин</p>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-primary">{analytics.summary.completionRate.toFixed(1)}%</div>
-                      <p className="text-sm text-muted-foreground">Гүйцэтгэл</p>
+
+                    {/* Additional Detailed Stats */}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 border-t border-border/50">
+                      <div className="space-y-1">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-muted-foreground">Дундаж RPE</span>
+                          <span className="text-lg font-semibold">{analytics.summary.averageRPE > 0 ? analytics.summary.averageRPE.toFixed(1) : '-'}</span>
+                        </div>
+                        {analytics.summary.averageRPE > 0 && (
+                          <div className="w-full bg-muted rounded-full h-2 mt-2">
+                            <div 
+                              className="bg-primary h-2 rounded-full transition-all"
+                              style={{ width: `${(analytics.summary.averageRPE / 10) * 100}%` }}
+                            />
+                          </div>
+                        )}
+                      </div>
+                      {analytics.summary.totalWorkouts > 0 && (
+                        <>
+                          <div className="space-y-1">
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm text-muted-foreground">Дундаж сет/дасгал</span>
+                              <span className="text-lg font-semibold">{(analytics.summary.totalSets / analytics.summary.totalWorkouts).toFixed(1)}</span>
+                            </div>
+                          </div>
+                          <div className="space-y-1">
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm text-muted-foreground">Дундаж жин/сет</span>
+                              <span className="text-lg font-semibold">
+                                {analytics.summary.totalSets > 0 
+                                  ? (analytics.summary.totalVolume / analytics.summary.completedSets).toFixed(1)
+                                  : '0'
+                                }кг
+                              </span>
+                            </div>
+                          </div>
+                        </>
+                      )}
                     </div>
                   </div>
                 ) : (
@@ -1490,49 +1855,120 @@ export default function GymApp() {
             {analytics && analytics.detailedExercises && analytics.detailedExercises.length > 0 && (
               <Card>
                 <CardHeader>
-                  <CardTitle>Дасгалын дэлгэрэнгүй мэдээлэл</CardTitle>
+                  <CardTitle className="flex items-center gap-2">
+                    <Dumbbell className="w-5 h-5" />
+                    Дасгалын дэлгэрэнгүй мэдээлэл ({analytics.detailedExercises.length})
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-3">
+                  <div className="space-y-4">
                     {analytics.detailedExercises.map((ex, index) => (
-                      <div key={index} className="border rounded-lg p-3 space-y-2">
-                        <div className="flex justify-between items-start">
+                      <div key={index} className="glass-card border border-border/50 rounded-lg p-4 space-y-4">
+                        {/* Header */}
+                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                           <div className="flex-1">
-                            <h4 className="font-semibold text-base">{ex.exercise.mnName}</h4>
-                            <p className="text-xs text-muted-foreground mt-1">{ex.exercise.muscleGroup}</p>
+                            <h4 className="font-semibold text-lg text-foreground">{ex.exercise.mnName}</h4>
+                            <div className="flex items-center gap-2 mt-1">
+                              <Badge variant="outline" className="text-xs">
+                                {ex.exercise.muscleGroup}
+                              </Badge>
+                              {ex.exercise.equipment && (
+                                <Badge variant="outline" className="text-xs">
+                                  {ex.exercise.equipment}
+                                </Badge>
+                              )}
+                            </div>
                           </div>
-                          <Badge variant="outline" className="ml-2">
-                            {ex.workoutCount} дасгал
+                          <Badge className="bg-primary/20 text-primary border-primary/30 px-3 py-1">
+                            {ex.workoutCount} удаа хийсэн
                           </Badge>
                         </div>
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-sm">
-                          <div>
-                            <span className="text-muted-foreground text-xs">Нийт сет:</span>
-                            <div className="font-medium">{ex.completedSets}/{ex.totalSets}</div>
+
+                        {/* Main Stats Grid */}
+                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+                          <div className="space-y-1">
+                            <p className="text-xs text-muted-foreground">Нийт сет</p>
+                            <div className="flex items-baseline gap-1">
+                              <span className="text-xl font-bold text-primary">{ex.completedSets}</span>
+                              <span className="text-sm text-muted-foreground">/{ex.totalSets}</span>
+                            </div>
+                            <div className="w-full bg-muted rounded-full h-1.5 mt-2">
+                              <div 
+                                className="bg-primary h-1.5 rounded-full transition-all"
+                                style={{ width: `${ex.totalSets > 0 ? (ex.completedSets / ex.totalSets) * 100 : 0}%` }}
+                              />
+                            </div>
                           </div>
-                          <div>
-                            <span className="text-muted-foreground text-xs">Нийт жин:</span>
-                            <div className="font-medium">{ex.totalVolume.toFixed(0)}кг</div>
+
+                          <div className="space-y-1">
+                            <p className="text-xs text-muted-foreground">Нийт жин</p>
+                            <div className="text-xl font-bold text-primary">{ex.totalVolume.toFixed(0)}кг</div>
+                            {ex.workoutCount > 0 && (
+                              <p className="text-xs text-muted-foreground/70">
+                                {(ex.totalVolume / ex.workoutCount).toFixed(0)}кг/дасгал
+                              </p>
+                            )}
                           </div>
-                          <div>
-                            <span className="text-muted-foreground text-xs">Дундаж жин:</span>
-                            <div className="font-medium">{ex.avgWeight.toFixed(1)}кг</div>
+
+                          <div className="space-y-1">
+                            <p className="text-xs text-muted-foreground">Дундаж жин</p>
+                            <div className="text-xl font-bold text-primary">{ex.avgWeight.toFixed(1)}кг</div>
                           </div>
-                          <div>
-                            <span className="text-muted-foreground text-xs">Хамгийн их жин:</span>
-                            <div className="font-medium">{ex.maxWeight}кг</div>
+
+                          <div className="space-y-1">
+                            <p className="text-xs text-muted-foreground">Хамгийн их жин</p>
+                            <div className="flex items-center gap-1">
+                              <span className="text-xl font-bold text-primary">{ex.maxWeight}кг</span>
+                              {ex.maxWeight > ex.avgWeight && (
+                                <Badge variant="outline" className="text-xs bg-green-500/10 text-green-500 border-green-500/30">
+                                  PR
+                                </Badge>
+                              )}
+                            </div>
                           </div>
-                          <div>
-                            <span className="text-muted-foreground text-xs">Дундаж давталт:</span>
-                            <div className="font-medium">{ex.avgReps.toFixed(1)}</div>
+
+                          <div className="space-y-1">
+                            <p className="text-xs text-muted-foreground">Дундаж давталт</p>
+                            <div className="text-xl font-bold text-primary">{ex.avgReps.toFixed(1)}</div>
                           </div>
+
                           {ex.avgRPE > 0 && (
-                            <div>
-                              <span className="text-muted-foreground text-xs">Дундаж RPE:</span>
-                              <div className="font-medium">{ex.avgRPE.toFixed(1)}</div>
+                            <div className="space-y-1">
+                              <p className="text-xs text-muted-foreground">Дундаж RPE</p>
+                              <div className="text-xl font-bold text-primary">{ex.avgRPE.toFixed(1)}</div>
+                              <div className="w-full bg-muted rounded-full h-1.5 mt-2">
+                                <div 
+                                  className="bg-primary h-1.5 rounded-full transition-all"
+                                  style={{ width: `${(ex.avgRPE / 10) * 100}%` }}
+                                />
+                              </div>
                             </div>
                           )}
                         </div>
+
+                        {/* Additional Stats */}
+                        {ex.completedSets > 0 && (
+                          <div className="pt-3 border-t border-border/50">
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
+                              <div>
+                                <span className="text-muted-foreground">Дундаж жин/сет:</span>
+                                <span className="ml-2 font-medium">{(ex.totalVolume / ex.completedSets).toFixed(1)}кг</span>
+                              </div>
+                              <div>
+                                <span className="text-muted-foreground">Гүйцэтгэл:</span>
+                                <span className="ml-2 font-medium">{((ex.completedSets / ex.totalSets) * 100).toFixed(0)}%</span>
+                              </div>
+                              <div>
+                                <span className="text-muted-foreground">Дундаж сет/дасгал:</span>
+                                <span className="ml-2 font-medium">{(ex.totalSets / ex.workoutCount).toFixed(1)}</span>
+                              </div>
+                              <div>
+                                <span className="text-muted-foreground">Хамгийн их жин/сет:</span>
+                                <span className="ml-2 font-medium">{ex.maxWeight}кг</span>
+                              </div>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -1705,17 +2141,35 @@ export default function GymApp() {
             {analytics && analytics.personalRecords.length > 0 && (
               <Card>
                 <CardHeader>
-                  <CardTitle>Personal Records</CardTitle>
+                  <CardTitle className="flex items-center gap-2">
+                    <TrendingUp className="w-5 h-5" />
+                    Personal Records ({analytics.personalRecords.length})
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-2">
-                    {analytics.personalRecords.slice(0, 5).map((pr, index) => (
-                      <div key={index} className="flex justify-between items-center p-2 bg-muted rounded">
-                        <span className="text-sm font-medium">{pr.exercise.mnName}</span>
-                        <Badge variant="secondary">{pr.prWeight}кг</Badge>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {analytics.personalRecords.map((pr, index) => (
+                      <div key={index} className="glass-card border border-border/50 rounded-lg p-4 hover:border-primary/50 transition-colors">
+                        <div className="flex justify-between items-start gap-3">
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-semibold text-base truncate">{pr.exercise.mnName}</h4>
+                            <p className="text-xs text-muted-foreground mt-1">{pr.exercise.muscleGroup}</p>
+                          </div>
+                          <div className="flex flex-col items-end">
+                            <Badge className="bg-primary/20 text-primary border-primary/30 text-base px-3 py-1">
+                              {pr.prWeight}кг
+                            </Badge>
+                            <span className="text-xs text-muted-foreground mt-1">Хамгийн их</span>
+                          </div>
+                        </div>
                       </div>
                     ))}
                   </div>
+                  {analytics.personalRecords.length > 10 && (
+                    <p className="text-xs text-muted-foreground mt-4 text-center">
+                      Ердөө {analytics.personalRecords.length} personal record харуулж байна
+                    </p>
+                  )}
                 </CardContent>
               </Card>
             )}
@@ -1898,13 +2352,43 @@ export default function GymApp() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
+                  {/* Profile Picture Upload */}
+                  <div className="flex flex-col items-center gap-4">
+                    <div className="relative">
+                      <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-border bg-muted/50 flex items-center justify-center">
+                        {currentUser?.profileImage ? (
+                          <img
+                            src={currentUser.profileImage}
+                            alt={currentUser?.name || 'Profile'}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <User className="w-12 h-12 text-muted-foreground" />
+                        )}
+                      </div>
+                    </div>
+                    <div className="w-full space-y-2">
+                      <Label htmlFor="avatarUpload">Профайл зураг</Label>
+                      <Input 
+                        id="avatarUpload" 
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageUpload}
+                        className="cursor-pointer"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Зургаа сонгоно уу (JPG, PNG, max 5MB)
+                      </p>
+                    </div>
+                  </div>
+                  
                   <div>
                     <Label htmlFor="name">Нэр</Label>
                     <Input 
                       id="name" 
                       placeholder="Таны нэр"
                       defaultValue={currentUser?.name || ''}
-                      onBlur={(e) => saveUserProfile({ name: e.target.value })}
+                      onBlur={(e) => saveUserProfile({ name: e.target.value.trim() || undefined })}
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
@@ -1915,18 +2399,27 @@ export default function GymApp() {
                         type="number" 
                         placeholder="Нас"
                         defaultValue={currentUser?.age || ''}
-                        onBlur={(e) => saveUserProfile({ age: parseInt(e.target.value) || undefined })}
+                        onBlur={(e) => {
+                          const value = e.target.value.trim()
+                          saveUserProfile({ age: value ? parseInt(value) : undefined })
+                        }}
                       />
                     </div>
                     <div>
-                      <Label htmlFor="weight">Жин (кг)</Label>
-                      <Input 
-                        id="weight" 
-                        type="number" 
-                        placeholder="Жин"
-                        defaultValue={currentUser?.weight || ''}
-                        onBlur={(e) => saveUserProfile({ weight: parseFloat(e.target.value) || undefined })}
-                      />
+                      <Label htmlFor="gender">Хүйс</Label>
+                      <Select 
+                        defaultValue={currentUser?.gender || ''}
+                        onValueChange={(value) => saveUserProfile({ gender: value || undefined })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Хүйс сонгох" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Male">Эр</SelectItem>
+                          <SelectItem value="Female">Эм</SelectItem>
+                          <SelectItem value="Other">Бусад</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
@@ -1937,25 +2430,41 @@ export default function GymApp() {
                         type="number" 
                         placeholder="Өндөр"
                         defaultValue={currentUser?.height || ''}
-                        onBlur={(e) => saveUserProfile({ height: parseFloat(e.target.value) || undefined })}
+                        onBlur={(e) => {
+                          const value = e.target.value.trim()
+                          saveUserProfile({ height: value ? parseFloat(value) : undefined })
+                        }}
                       />
                     </div>
                     <div>
-                      <Label htmlFor="level">Түвшин</Label>
-                      <Select 
-                        defaultValue={currentUser?.experienceLevel || 'Intermediate'}
-                        onValueChange={(value) => saveUserProfile({ experienceLevel: value })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Түвшин сонгох" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Beginner">Эхлэгч</SelectItem>
-                          <SelectItem value="Intermediate">Дунд</SelectItem>
-                          <SelectItem value="Advanced">Дээд</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <Label htmlFor="weight">Жин (кг)</Label>
+                      <Input 
+                        id="weight" 
+                        type="number" 
+                        placeholder="Жин"
+                        defaultValue={currentUser?.weight || ''}
+                        onBlur={(e) => {
+                          const value = e.target.value.trim()
+                          saveUserProfile({ weight: value ? parseFloat(value) : undefined })
+                        }}
+                      />
                     </div>
+                  </div>
+                  <div>
+                    <Label htmlFor="level">Түвшин</Label>
+                    <Select 
+                      defaultValue={currentUser?.experienceLevel || 'Intermediate'}
+                      onValueChange={(value) => saveUserProfile({ experienceLevel: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Түвшин сонгох" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Beginner">Эхлэгч</SelectItem>
+                        <SelectItem value="Intermediate">Дунд</SelectItem>
+                        <SelectItem value="Advanced">Дээд</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="pt-2">
                     <p className="text-sm text-muted-foreground">
@@ -1975,6 +2484,14 @@ export default function GymApp() {
                   <Button variant="outline" className="w-full justify-start">
                     <Download className="w-4 h-4 mr-2" />
                     PDF татах
+                  </Button>
+                  <Button 
+                    variant="destructive" 
+                    className="w-full justify-start"
+                    onClick={handleLogout}
+                  >
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Гарах
                   </Button>
                 </div>
               </CardContent>

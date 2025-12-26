@@ -39,3 +39,4 @@ eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im14bnd0bGt
 - `NEXT_PUBLIC_` prefix-гүй variable-ууд нь зөвхөн **server-side** код дээр харагдана (илүү аюулгүй)
 - `SUPABASE_SERVICE_ROLE_KEY` нь маш хүчтэй key тул зөвхөн server-side дээр ашиглах ёстой
 
+

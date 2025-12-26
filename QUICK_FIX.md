@@ -37,3 +37,4 @@ ALTER TABLE "Set" DISABLE ROW LEVEL SECURITY;
 3. **Vercel Logs** шалгах (Functions → Logs)
 4. **Supabase Logs** шалгах (Logs → API Logs)
 
+

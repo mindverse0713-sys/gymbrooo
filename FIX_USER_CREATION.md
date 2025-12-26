@@ -63,3 +63,4 @@ Browser console дээр (F12) алдааны мэссэжийг харах:
 4. Vercel environment variables шалгах
 5. Browser refresh хийж дахин оролдох
 
+
