@@ -1,5 +1,67 @@
 const API_BASE = process.env.NODE_ENV === 'production' ? '' : ''
 
+// Food and Nutrition API
+export interface FoodItem {
+  food: string
+  calories: number
+  protein: number
+  carbs: number
+  fat: number
+  servingSize?: string
+}
+
+export interface ExerciseRecommendation {
+  exercise: string
+  duration: number // minutes
+  caloriesBurned: number
+}
+
+export async function getNutritionFromFoodName(foodName: string): Promise<FoodItem | null> {
+  try {
+    const response = await fetch('/api/food/analyze', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ foodName }),
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}))
+      if (response.status === 404) {
+        // Food not found
+        return null
+      }
+      throw new Error(errorData.error || 'Failed to get nutrition data')
+    }
+
+    return await response.json()
+  } catch (error) {
+    console.error('Error getting nutrition data:', error)
+    return null
+  }
+}
+
+export function calculateExerciseRecommendations(calories: number): ExerciseRecommendation[] {
+  // Average calories burned per minute for different exercises (based on 70kg person)
+  const exercises = [
+    { name: 'Гүйлт (8 км/ц)', caloriesPerMin: 8.3 },
+    { name: 'Дугуй (дунд хурд)', caloriesPerMin: 7.0 },
+    { name: 'Сэлэлт', caloriesPerMin: 6.5 },
+    { name: 'Олс үсрэлт', caloriesPerMin: 10.0 },
+    { name: 'Жингийн дасгал', caloriesPerMin: 5.0 },
+    { name: 'Алхах (5 км/ц)', caloriesPerMin: 3.5 },
+    { name: 'HIIT', caloriesPerMin: 12.0 },
+    { name: 'Сэлүүр', caloriesPerMin: 7.5 },
+  ]
+
+  return exercises.map(ex => ({
+    exercise: ex.name,
+    duration: Math.ceil(calories / ex.caloriesPerMin),
+    caloriesBurned: calories
+  }))
+}
+
 export interface Exercise {
   id: string
   name: string

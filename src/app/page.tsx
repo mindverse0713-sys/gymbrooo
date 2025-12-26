@@ -22,7 +22,8 @@ import {
   X,
   Trash2,
   ChevronDown,
-  LogOut
+  LogOut,
+  UtensilsCrossed
 } from 'lucide-react'
 import { 
   getExercises, 
@@ -39,7 +40,11 @@ import {
   updateProgram,
   deleteProgram,
   login,
-  Analytics
+  Analytics,
+  getNutritionFromFoodName,
+  calculateExerciseRecommendations,
+  FoodItem,
+  ExerciseRecommendation
 } from '@/lib/api'
 import { PDFExporter } from '@/lib/pdf-export'
 
@@ -93,6 +98,10 @@ export default function GymApp() {
   const [newProgramName, setNewProgramName] = useState('')
   const [showCreateProgram, setShowCreateProgram] = useState(false)
   const [mounted, setMounted] = useState(false)
+  const [foodName, setFoodName] = useState('')
+  const [foodAnalysis, setFoodAnalysis] = useState<FoodItem | null>(null)
+  const [exerciseRecommendations, setExerciseRecommendations] = useState<ExerciseRecommendation[]>([])
+  const [analyzingFood, setAnalyzingFood] = useState(false)
 
   // Handle hydration
   useEffect(() => {
@@ -367,6 +376,30 @@ export default function GymApp() {
     } catch (error) {
       console.error('Error uploading image:', error)
       alert('Зураг оруулахад алдаа гарлаа')
+    }
+  }
+
+  const handleFoodNameSubmit = async () => {
+    if (!foodName.trim()) {
+      alert('Хоолны нэрийг оруулна уу')
+      return
+    }
+
+    setAnalyzingFood(true)
+    try {
+      const nutrition = await getNutritionFromFoodName(foodName)
+      if (nutrition) {
+        setFoodAnalysis(nutrition)
+        const recommendations = calculateExerciseRecommendations(nutrition.calories)
+        setExerciseRecommendations(recommendations)
+      } else {
+        alert('Хоолны мэдээлэл олдсонгүй')
+      }
+    } catch (error) {
+      console.error('Error analyzing food:', error)
+      alert('Хоолны мэдээлэл авахад алдаа гарлаа')
+    } finally {
+      setAnalyzingFood(false)
     }
   }
 
@@ -1211,6 +1244,98 @@ export default function GymApp() {
                     })}
                   </div>
                 </div>
+
+                {/* Food/Nutrition Section */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                      <UtensilsCrossed className="w-4 h-4 sm:w-5 sm:h-5" />
+                      Хоолны калори тооцоолох
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {/* Food Name Input */}
+                      <div>
+                        <Label htmlFor="foodNameHome">Хоолны нэр оруулах</Label>
+                        <div className="flex gap-2 mt-2">
+                          <Input 
+                            id="foodNameHome" 
+                            placeholder="Жишээ: apple, chicken breast, rice"
+                            value={foodName}
+                            onChange={(e) => setFoodName(e.target.value)}
+                            onKeyPress={(e) => e.key === 'Enter' && handleFoodNameSubmit()}
+                          />
+                          <Button 
+                            onClick={handleFoodNameSubmit}
+                            disabled={analyzingFood || !foodName.trim()}
+                          >
+                            {analyzingFood ? 'Тооцоолж байна...' : 'Тооцоолох'}
+                          </Button>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Хоолны нэрийг англи хэлээр оруулна уу
+                        </p>
+                      </div>
+
+                      {/* Analysis Results */}
+                      {analyzingFood && (
+                        <div className="text-center py-4">
+                          <p className="text-muted-foreground">Хоолны мэдээлэл тооцоолж байна...</p>
+                        </div>
+                      )}
+
+                      {foodAnalysis && (
+                        <div className="space-y-3">
+                          <div className="glass-card border border-border/50 rounded-lg p-4">
+                            <h4 className="font-semibold text-lg mb-3">{foodAnalysis.food}</h4>
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                              <div className="text-center">
+                                <div className="text-xl font-bold text-primary">{foodAnalysis.calories}</div>
+                                <p className="text-xs text-muted-foreground">Калори</p>
+                              </div>
+                              <div className="text-center">
+                                <div className="text-xl font-bold text-primary">{foodAnalysis.protein}г</div>
+                                <p className="text-xs text-muted-foreground">Уураг</p>
+                              </div>
+                              <div className="text-center">
+                                <div className="text-xl font-bold text-primary">{foodAnalysis.carbs}г</div>
+                                <p className="text-xs text-muted-foreground">Нүүрс ус</p>
+                              </div>
+                              <div className="text-center">
+                                <div className="text-xl font-bold text-primary">{foodAnalysis.fat}г</div>
+                                <p className="text-xs text-muted-foreground">Өөх тос</p>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Exercise Recommendations */}
+                          {exerciseRecommendations.length > 0 && (
+                            <div className="border border-border/50 rounded-lg p-4">
+                              <h5 className="font-medium mb-2">Дасгалын зөвлөмж</h5>
+                              <p className="text-xs text-muted-foreground mb-3">
+                                {foodAnalysis.calories} калори шатаахын тулд:
+                              </p>
+                              <div className="space-y-2">
+                                {exerciseRecommendations.slice(0, 3).map((rec, index) => (
+                                  <div 
+                                    key={index}
+                                    className="flex items-center justify-between p-2 bg-muted rounded text-sm"
+                                  >
+                                    <span className="font-medium">{rec.exercise}</span>
+                                    <Badge className="bg-primary text-primary-foreground text-xs">
+                                      {rec.duration} мин
+                                    </Badge>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
                 
                 <Card>
                   <CardHeader>
@@ -2493,6 +2618,114 @@ export default function GymApp() {
                     <LogOut className="w-4 h-4 mr-2" />
                     Гарах
                   </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="nutrition">
+          <div className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <UtensilsCrossed className="w-5 h-5" />
+                  Хоолны калори тооцоолох
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {/* Food Name Input */}
+                  <div>
+                    <Label htmlFor="foodName">Хоолны нэр оруулах</Label>
+                    <div className="flex gap-2 mt-2">
+                      <Input 
+                        id="foodName" 
+                        placeholder="Жишээ: apple, chicken breast, rice"
+                        value={foodName}
+                        onChange={(e) => setFoodName(e.target.value)}
+                        onKeyPress={(e) => e.key === 'Enter' && handleFoodNameSubmit()}
+                      />
+                      <Button 
+                        onClick={handleFoodNameSubmit}
+                        disabled={analyzingFood || !foodName.trim()}
+                      >
+                        {analyzingFood ? 'Тооцоолж байна...' : 'Тооцоолох'}
+                      </Button>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Хоолны нэрийг англи хэлээр оруулна уу
+                    </p>
+                  </div>
+
+                  {/* Analysis Results */}
+                  {analyzingFood && (
+                    <div className="text-center py-8">
+                      <p className="text-muted-foreground">Хоолны мэдээлэл тооцоолж байна...</p>
+                    </div>
+                  )}
+
+                  {foodAnalysis && (
+                    <div className="space-y-4">
+                      <Card className="glass-card border border-border/50">
+                        <CardHeader>
+                          <CardTitle className="text-lg">{foodAnalysis.food}</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                            <div className="text-center">
+                              <div className="text-2xl font-bold text-primary">{foodAnalysis.calories}</div>
+                              <p className="text-sm text-muted-foreground">Калори</p>
+                            </div>
+                            <div className="text-center">
+                              <div className="text-2xl font-bold text-primary">{foodAnalysis.protein}г</div>
+                              <p className="text-sm text-muted-foreground">Уураг</p>
+                            </div>
+                            <div className="text-center">
+                              <div className="text-2xl font-bold text-primary">{foodAnalysis.carbs}г</div>
+                              <p className="text-sm text-muted-foreground">Нүүрс ус</p>
+                            </div>
+                            <div className="text-center">
+                              <div className="text-2xl font-bold text-primary">{foodAnalysis.fat}г</div>
+                              <p className="text-sm text-muted-foreground">Өөх тос</p>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      {/* Exercise Recommendations */}
+                      {exerciseRecommendations.length > 0 && (
+                        <Card>
+                          <CardHeader>
+                            <CardTitle className="text-lg">Дасгалын зөвлөмж</CardTitle>
+                            <p className="text-sm text-muted-foreground">
+                              {foodAnalysis.calories} калори шатаахын тулд:
+                            </p>
+                          </CardHeader>
+                          <CardContent>
+                            <div className="space-y-2">
+                              {exerciseRecommendations.slice(0, 5).map((rec, index) => (
+                                <div 
+                                  key={index}
+                                  className="flex items-center justify-between p-3 bg-muted rounded-lg"
+                                >
+                                  <div className="flex-1">
+                                    <div className="font-medium">{rec.exercise}</div>
+                                    <div className="text-sm text-muted-foreground">
+                                      {rec.duration} минут
+                                    </div>
+                                  </div>
+                                  <Badge className="bg-primary text-primary-foreground">
+                                    {rec.caloriesBurned} калори
+                                  </Badge>
+                                </div>
+                              ))}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      )}
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
