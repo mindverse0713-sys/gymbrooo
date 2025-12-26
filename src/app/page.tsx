@@ -1246,30 +1246,19 @@ export default function GymApp() {
                                 variant="outline"
                                 size="sm"
                                 onClick={() => updateSet(exerciseIndex, set.id, 'weight', Math.max(0, (set.weight || 0) - 5))}
-                                className="h-12 w-12 p-0 border-border hover:bg-primary/10 hover:border-primary"
+                                className="h-12 flex-1 border-border hover:bg-primary/10 hover:border-primary rounded-lg"
                               >
                                 <span className="text-lg font-bold">-5</span>
                               </Button>
-                              <Input
-                                type="number"
-                                placeholder="Жин"
-                                value={set.weight || ''}
-                                onChange={(e) => {
-                                  const value = parseFloat(e.target.value) || 0
-                                  // Round to nearest 5
-                                  const roundedValue = Math.round(value / 5) * 5
-                                  updateSet(exerciseIndex, set.id, 'weight', roundedValue)
-                                }}
-                                step="5"
-                                className="h-12 text-base bg-muted/50 border-border focus:border-primary focus:ring-primary flex-1 text-center"
-                                inputMode="numeric"
-                              />
+                              <div className="h-12 flex-1 flex items-center justify-center bg-muted/50 border border-border rounded-lg">
+                                <span className="text-lg font-medium">{set.weight || 0}</span>
+                              </div>
                               <Button
                                 type="button"
                                 variant="outline"
                                 size="sm"
                                 onClick={() => updateSet(exerciseIndex, set.id, 'weight', (set.weight || 0) + 5)}
-                                className="h-12 w-12 p-0 border-border hover:bg-primary/10 hover:border-primary"
+                                className="h-12 flex-1 border-border hover:bg-primary/10 hover:border-primary rounded-lg"
                               >
                                 <span className="text-lg font-bold">+5</span>
                               </Button>
